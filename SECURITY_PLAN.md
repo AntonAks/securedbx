@@ -274,6 +274,8 @@ curl -X POST https://your-api.execute-api.region.amazonaws.com/dev/upload/init \
 
 ## 2. reCAPTCHA v3 Implementation
 
+**Status**: ✅ **COMPLETED** - Deployed to dev (December 2024)
+
 ### Why reCAPTCHA First?
 - ✅ Designed for client-side apps (no secret exposure)
 - ✅ Invisible to legitimate users (v3 runs in background)
@@ -284,11 +286,11 @@ curl -X POST https://your-api.execute-api.region.amazonaws.com/dev/upload/init \
 ### Implementation Steps
 
 #### 1.1 Register with Google reCAPTCHA
-- [ ] Go to https://www.google.com/recaptcha/admin
-- [ ] Register sdbx domain
-- [ ] Get Site Key (public, goes in frontend)
-- [ ] Get Secret Key (private, goes in Lambda env vars)
-- [ ] Choose reCAPTCHA v3 (score-based, invisible)
+- [x] Go to https://www.google.com/recaptcha/admin
+- [x] Register sdbx domain
+- [x] Get Site Key (public, goes in frontend)
+- [x] Get Secret Key (private, goes in Lambda env vars)
+- [x] Choose reCAPTCHA v3 (score-based, invisible)
 
 #### 1.2 Frontend Changes
 
@@ -624,20 +626,26 @@ resource "aws_cloudwatch_metric_alarm" "high_cost" {
 - Zero cost, immediate protection
 - Dev URL: `https://d21g35hqtnbz7i.cloudfront.net`
 
-### Phase 2: reCAPTCHA Implementation (1-2 days)
-**Complete before production announcement**
+### Phase 2: reCAPTCHA Implementation ✅ COMPLETED
+**Deployed to dev (December 2024)**
 
-1. [ ] Register Google reCAPTCHA account (get keys)
-2. [ ] Implement reCAPTCHA in frontend (add script + token generation)
-3. [ ] Add reCAPTCHA verification in backend (all upload endpoints)
-4. [ ] Add `requests` library to Lambda requirements
-5. [ ] Add Lambda environment variables for reCAPTCHA
-6. [ ] Test thoroughly in dev environment
-7. [ ] Monitor for false positives
-8. [ ] Adjust threshold if needed (start with 0.5)
-9. [ ] Deploy to prod
+1. [x] Register Google reCAPTCHA account (get keys)
+2. [x] Implement reCAPTCHA in frontend (add script + token generation)
+3. [x] Add reCAPTCHA verification in backend (upload, download, report endpoints)
+4. [x] Create Lambda Layer for shared dependencies (`requests` library)
+5. [x] Add Lambda environment variables for reCAPTCHA
+6. [x] Test thoroughly in dev environment
+7. [x] Monitor for false positives (score: 0.9 for legitimate users)
+8. [x] Threshold set to 0.5 (working well)
+9. [ ] Deploy to prod (pending)
 
 **Result after Phase 2:** ~95-98% of automated abuse blocked
+
+**Lambda Layer Implementation:**
+- Created `sdbx-dev-dependencies:1` layer containing `requests` library
+- All 5 Lambda functions now use shared layer (smaller deployments)
+- Faster deployments - dependencies not re-uploaded with each function
+- Consistent dependency versions across all functions
 
 ### Phase 3: Production Launch
 1. [ ] Both layers deployed and tested

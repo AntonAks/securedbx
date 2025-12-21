@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - sdbx</title>
+    <meta name="description" content="Learn more about sdbx - zero-knowledge file sharing with privacy in mind">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h1>🔒 sdbx</h1>
+        <p class="tagline">About the Project</p>
+    </header>
+
+    <main>
+        <section class="card">
+            <h2>What is sdbx?</h2>
+            <p>
+                sdbx is a <strong>zero-knowledge file sharing service</strong> designed with privacy as the core principle.
+                Share files securely with end-to-end encryption, one-time downloads, and no user tracking.
+            </p>
+            <p>
+                Unlike traditional file sharing services, sdbx ensures that your files are encrypted <em>before</em> they
+                leave your device, and the encryption key never reaches our servers. This means we literally cannot
+                access your files, even if we wanted to.
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>Our Mission</h2>
+            <p>
+                In an age where privacy is constantly under threat, we believe that sharing files shouldn't require
+                sacrificing your data or trusting a third party with your sensitive information.
+            </p>
+            <p>
+                sdbx was built to provide a simple, secure way to share files without:
+            </p>
+            <ul>
+                <li>Creating accounts or providing personal information</li>
+                <li>Trusting us with your encryption keys</li>
+                <li>Worrying about files being stored indefinitely</li>
+                <li>Being tracked or profiled</li>
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>How It Works</h2>
+            <div class="features">
+                <div class="feature">
+                    <h4>🔐 Client-side Encryption</h4>
+                    <p>
+                        Your files are encrypted in your browser using AES-256-GCM before upload.
+                        We never see the unencrypted content.
+                    </p>
+                </div>
+                <div class="feature">
+                    <h4>🔑 Zero-Knowledge Architecture</h4>
+                    <p>
+                        The encryption key and original filename are stored in the URL fragment (#),
+                        which is never sent to our servers. Only you and the recipient have access.
+                    </p>
+                </div>
+                <div class="feature">
+                    <h4>🚫 No Tracking</h4>
+                    <p>
+                        No user accounts, no cookies, no analytics, no IP logging.
+                        We collect zero personal information.
+                    </p>
+                </div>
+                <div class="feature">
+                    <h4>⏱️ Self-Destructing Files</h4>
+                    <p>
+                        Each file can only be downloaded once, then it's automatically and
+                        permanently deleted from our servers.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Security Features</h2>
+            <ul>
+                <li><strong>End-to-End Encryption:</strong> AES-256-GCM with 256-bit keys generated in your browser</li>
+                <li><strong>HTTPS Only:</strong> All communication uses TLS 1.2+ encryption</li>
+                <li><strong>Bot Protection:</strong> Google reCAPTCHA v3 prevents automated abuse</li>
+                <li><strong>Atomic Operations:</strong> Database-level race condition prevention</li>
+                <li><strong>Origin Verification:</strong> CloudFront custom headers block direct API access</li>
+                <li><strong>Automatic Cleanup:</strong> Expired files are deleted hourly</li>
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>Technology Stack</h2>
+            <p>sdbx is built with modern, privacy-focused technologies:</p>
+            <ul>
+                <li><strong>Frontend:</strong> Vanilla JavaScript, Web Crypto API</li>
+                <li><strong>Backend:</strong> AWS Lambda (Python 3.12), API Gateway</li>
+                <li><strong>Storage:</strong> Amazon S3 (encrypted files), DynamoDB (metadata)</li>
+                <li><strong>CDN:</strong> Amazon CloudFront</li>
+                <li><strong>Infrastructure:</strong> Terraform (Infrastructure as Code)</li>
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>Limitations</h2>
+            <p>To ensure optimal performance and security, sdbx has the following limitations:</p>
+            <ul>
+                <li>Maximum file size: 100 MB</li>
+                <li>Files expire after 1, 12, or 24 hours (your choice)</li>
+                <li>Each file can only be downloaded once</li>
+                <li>Desktop browsers recommended for best experience</li>
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>Privacy Policy</h2>
+            <p><strong>Simple version: We collect nothing.</strong></p>
+            <ul>
+                <li>We don't store unencrypted files</li>
+                <li>We don't store or have access to filenames</li>
+                <li>We don't have access to your encryption keys</li>
+                <li>We don't log IP addresses for file access</li>
+                <li>We don't use cookies, tracking, or analytics</li>
+                <li>Files are automatically deleted after first download or expiration</li>
+            </ul>
+            <p>
+                The only data we store is: encrypted file blobs (which we cannot decrypt),
+                file size, upload timestamp, and expiration time. That's it.
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>Open Source</h2>
+            <p>
+                sdbx is open source and available on GitHub. We believe in transparency and
+                invite security researchers to audit our code.
+            </p>
+            <p class="text-center" style="margin-top: 1.5rem;">
+                <a href="https://github.com/antonaks/sdbx" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-auto">
+                    View Source Code on GitHub
+                </a>
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>Disclaimer</h2>
+            <p>
+                This service is provided as-is. While we implement strong encryption and security practices,
+                users are responsible for their own data. Do not use sdbx for illegal content.
+            </p>
+            <p>
+                For sensitive files, we recommend additional security measures like password-protecting
+                archives before upload.
+            </p>
+        </section>
+
+        <section class="card text-center">
+            <h2>Questions?</h2>
+            <p>
+                Have questions, suggestions, or found a security issue?
+            </p>
+            <p style="margin-top: 1.5rem;">
+                <a href="https://github.com/antonaks/sdbx/issues" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-auto">
+                    Report an Issue on GitHub
+                </a>
+            </p>
+        </section>
+
+        <div class="text-center" style="margin-top: 2rem;">
+            <a href="index.html" class="btn btn-primary btn-auto">← Back to Home</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; <span id="year"></span> sdbx - Built with privacy in mind</p>
+        <p>
+            <a href="about.html">About</a> |
+            <a href="https://github.com/antonaks/sdbx" target="_blank" rel="noopener noreferrer">Source Code</a>
+        </p>
+    </footer>
+
+    <script>
+        // Set current year dynamically
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

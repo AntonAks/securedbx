@@ -76,6 +76,19 @@ main {
     margin-bottom: 2rem;
 }
 
+.card p {
+    margin-bottom: 1rem;
+}
+
+.card ul {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.card ul li {
+    margin-bottom: 0.5rem;
+}
+
 h2 {
     margin-bottom: 1.5rem;
     color: var(--text-color);
@@ -158,6 +171,7 @@ h3 {
 
 /* Buttons */
 .btn {
+    display: inline-block;
     padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 6px;
@@ -166,6 +180,12 @@ h3 {
     cursor: pointer;
     transition: all 0.2s;
     width: 100%;
+    text-decoration: none;
+    text-align: center;
+}
+
+.btn-auto {
+    width: auto;
 }
 
 .btn-primary {

@@ -134,6 +134,30 @@ const Utils = (function() {
         return parts[2] || null;
     }
 
+    /**
+     * Get reCAPTCHA v3 token for action
+     * @param {string} siteKey - reCAPTCHA site key
+     * @param {string} action - Action name (upload, download, report)
+     * @returns {Promise<string>} reCAPTCHA token
+     * @throws {Error} If reCAPTCHA fails
+     */
+    async function getRecaptchaToken(siteKey, action) {
+        if (!window.grecaptcha) {
+            throw new Error('reCAPTCHA not loaded');
+        }
+
+        if (!siteKey) {
+            throw new Error('reCAPTCHA not configured');
+        }
+
+        try {
+            return await grecaptcha.execute(siteKey, { action: action });
+        } catch (error) {
+            console.error('reCAPTCHA error:', error);
+            throw new Error('Failed to verify reCAPTCHA. Please refresh and try again.');
+        }
+    }
+
     return {
         formatFileSize,
         formatTimeRemaining,
@@ -145,5 +169,6 @@ const Utils = (function() {
         getFileIdFromUrl,
         getKeyFromFragment,
         getFileNameFromFragment,
+        getRecaptchaToken,
     };
 })();

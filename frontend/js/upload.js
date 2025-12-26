@@ -7,7 +7,7 @@
 // Configuration
 const CONFIG = {
     API_BASE_URL: '/prod',  // Routed through CloudFront to API Gateway
-    MAX_FILE_SIZE: 500 * 1024 * 1024, // 500 MB (0.5 GB)
+    MAX_FILE_SIZE: 500 * 1024 * 1024, // 500 MB
     RECAPTCHA_SITE_KEY: '6LdulTIsAAAAAJdhvyMU6B1og7GE7d5DySrQUQiv',  // Public site key
 };
 
@@ -157,23 +157,11 @@ async function handleUpload() {
 }
 
 /**
- * Get reCAPTCHA token
- */
-async function getRecaptchaToken() {
-    try {
-        return await grecaptcha.execute(CONFIG.RECAPTCHA_SITE_KEY, { action: 'upload' });
-    } catch (error) {
-        console.error('reCAPTCHA error:', error);
-        throw new Error('Failed to verify reCAPTCHA. Please refresh and try again.');
-    }
-}
-
-/**
  * Initialize upload with API
  */
 async function initializeUpload(fileSize, fileName, ttl) {
     // Get reCAPTCHA token
-    const recaptchaToken = await getRecaptchaToken();
+    const recaptchaToken = await Utils.getRecaptchaToken(CONFIG.RECAPTCHA_SITE_KEY, 'upload');
 
     const response = await fetch(`${CONFIG.API_BASE_URL}/upload/init`, {
         method: 'POST',

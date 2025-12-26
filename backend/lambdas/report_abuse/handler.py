@@ -5,10 +5,12 @@ import logging
 import os
 from typing import Any
 
+from shared.constants import AUTO_DELETE_THRESHOLD
 from shared.dynamo import get_file_record, increment_report_count
 from shared.exceptions import ValidationError
+from shared.request_helpers import get_path_parameter, parse_json_body
 from shared.response import error_response, success_response
-from shared.security import verify_cloudfront_origin, verify_recaptcha
+from shared.security import require_cloudfront_and_recaptcha
 from shared.validation import validate_file_id
 
 logger = logging.getLogger(__name__)
@@ -16,35 +18,22 @@ logger.setLevel(logging.INFO)
 
 # Environment variables
 TABLE_NAME = os.environ.get("TABLE_NAME")
-AUTO_DELETE_THRESHOLD = 3  # Auto-delete after 3 reports
 
 
+@require_cloudfront_and_recaptcha
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
     Report file for abuse.
 
+    Security verification (CloudFront origin + reCAPTCHA) is handled by decorator.
+
     If report count reaches threshold, file should be reviewed/deleted.
     """
     try:
-        # Verify request comes from CloudFront
-        if not verify_cloudfront_origin(event):
-            return error_response('Direct API access not allowed', 403)
-
         # Parse request
-        file_id = event.get("pathParameters", {}).get("file_id")
-        body = json.loads(event.get("body", "{}"))
+        file_id = get_path_parameter(event, "file_id")
+        body = parse_json_body(event)
         reason = body.get("reason", "")
-        recaptcha_token = body.get("recaptcha_token")
-
-        # Verify reCAPTCHA token
-        source_ip = event.get("requestContext", {}).get("identity", {}).get("sourceIp")
-        is_valid, score, error_msg = verify_recaptcha(recaptcha_token, source_ip)
-
-        if not is_valid:
-            logger.warning(f"reCAPTCHA verification failed for abuse report: {error_msg} (score: {score})")
-            return error_response(error_msg or "Bot activity detected", 403)
-
-        logger.info(f"reCAPTCHA verification succeeded for abuse report with score: {score}")
 
         # Validate input
         validate_file_id(file_id)
@@ -63,6 +52,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 "file_id": file_id,
                 "reason": reason,
                 "report_count": new_count,
+                "recaptcha_score": event.get('_recaptcha_score', 'N/A'),
             })
         )
 

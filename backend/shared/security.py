@@ -3,7 +3,8 @@
 import json
 import logging
 import os
-from typing import Any, Optional
+from functools import wraps
+from typing import Any, Callable, Optional
 
 import requests
 
@@ -115,13 +116,90 @@ def verify_recaptcha(token: str, remote_ip: Optional[str] = None) -> tuple[bool,
         return False, 0.0, "Internal error during verification"
 
 
-def build_error_response(status: int, message: str) -> dict[str, Any]:
-    """Build standard error response."""
-    return {
-        'statusCode': status,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-        },
-        'body': json.dumps({'error': message})
-    }
+def require_cloudfront_and_recaptcha(handler: Callable) -> Callable:
+    """
+    Decorator to verify CloudFront origin and reCAPTCHA for Lambda handlers.
+
+    This decorator should be used on POST endpoints that modify data.
+    It verifies:
+    1. Request originates from CloudFront (blocks direct API access)
+    2. Valid reCAPTCHA v3 token with sufficient score
+
+    Usage:
+        @require_cloudfront_and_recaptcha
+        def handler(event, context):
+            # Your handler code
+            # Access verified reCAPTCHA score via event['_recaptcha_score']
+
+    Args:
+        handler: Lambda handler function to wrap
+
+    Returns:
+        Wrapped handler with security verification
+    """
+    @wraps(handler)
+    def wrapper(event: dict[str, Any], context: Any) -> dict[str, Any]:
+        # Import here to avoid circular dependency
+        from shared.response import error_response
+
+        # Verify CloudFront origin
+        if not verify_cloudfront_origin(event):
+            return error_response('Direct API access not allowed', 403)
+
+        # Parse reCAPTCHA token from body
+        try:
+            body = json.loads(event.get("body", "{}"))
+        except json.JSONDecodeError:
+            return error_response('Invalid JSON in request body', 400)
+
+        recaptcha_token = body.get("recaptcha_token")
+
+        # Verify reCAPTCHA
+        source_ip = event.get("requestContext", {}).get("identity", {}).get("sourceIp")
+        is_valid, score, error_msg = verify_recaptcha(recaptcha_token, source_ip)
+
+        if not is_valid:
+            logger.warning(f"reCAPTCHA verification failed: {error_msg} (score: {score})")
+            return error_response(error_msg or "Bot activity detected", 403)
+
+        logger.info(f"Security verification passed (score: {score})")
+
+        # Store verified info in event for handler use
+        event['_security_verified'] = True
+        event['_recaptcha_score'] = score
+
+        return handler(event, context)
+
+    return wrapper
+
+
+def require_cloudfront_only(handler: Callable) -> Callable:
+    """
+    Decorator to verify CloudFront origin only (no reCAPTCHA).
+
+    This decorator should be used on read-only GET endpoints that don't
+    require bot protection but should still block direct API access.
+
+    Usage:
+        @require_cloudfront_only
+        def handler(event, context):
+            # Your handler code
+
+    Args:
+        handler: Lambda handler function to wrap
+
+    Returns:
+        Wrapped handler with CloudFront verification
+    """
+    @wraps(handler)
+    def wrapper(event: dict[str, Any], context: Any) -> dict[str, Any]:
+        # Import here to avoid circular dependency
+        from shared.response import error_response
+
+        # Verify CloudFront origin
+        if not verify_cloudfront_origin(event):
+            return error_response('Direct API access not allowed', 403)
+
+        return handler(event, context)
+
+    return wrapper

@@ -97,13 +97,13 @@ resource "aws_api_gateway_model" "report_abuse_request" {
 # Lambda Layer for shared dependencies
 resource "null_resource" "dependencies_layer_build" {
   triggers = {
-    requirements = filemd5("${path.module}/layer_requirements.txt")
+    requirements = filemd5("${path.module}/../../../backend/lambdas/requirements.txt")
   }
 
   provisioner "local-exec" {
     command = <<-EOT
       mkdir -p ${path.module}/builds/layer/python
-      pip install -q -r ${path.module}/layer_requirements.txt -t ${path.module}/builds/layer/python/
+      pip install -q -r ${path.module}/../../../backend/lambdas/requirements.txt -t ${path.module}/builds/layer/python/
       cd ${path.module}/builds/layer
       zip -r ../dependencies-layer.zip python/ -x "*.pyc" -x "__pycache__/*"
     EOT

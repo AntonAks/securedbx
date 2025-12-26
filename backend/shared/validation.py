@@ -3,11 +3,10 @@
 import re
 from typing import Any
 
+from .constants import ALLOWED_TTL_VALUES, MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_MB
 from .exceptions import ValidationError
 
-# Constants
-MAX_FILE_SIZE = 104857600  # 100 MB
-ALLOWED_TTL_VALUES = ("1h", "12h", "24h")
+# UUID pattern for file ID validation
 UUID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 
 
@@ -44,8 +43,8 @@ def validate_file_size(file_size: int) -> None:
     if file_size <= 0:
         raise ValidationError("File size must be positive")
 
-    if file_size > MAX_FILE_SIZE:
-        raise ValidationError("File size exceeds maximum limit (100 MB)")
+    if file_size > MAX_FILE_SIZE_BYTES:
+        raise ValidationError(f"File size exceeds maximum limit ({MAX_FILE_SIZE_MB} MB)")
 
 
 def validate_ttl(ttl: str) -> None:

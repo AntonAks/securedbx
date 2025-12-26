@@ -192,7 +192,7 @@ async function handleDownload() {
  */
 async function requestDownload() {
     // Get reCAPTCHA token
-    const recaptchaToken = await getRecaptchaToken('download');
+    const recaptchaToken = await Utils.getRecaptchaToken(CONFIG.RECAPTCHA_SITE_KEY, 'download');
 
     const response = await fetch(`${CONFIG.API_BASE_URL}/files/${fileId}/download`, {
         method: 'POST',
@@ -287,7 +287,7 @@ async function handleReportAbuse() {
 
     try {
         // Get reCAPTCHA token
-        const recaptchaToken = await getRecaptchaToken('report');
+        const recaptchaToken = await Utils.getRecaptchaToken(CONFIG.RECAPTCHA_SITE_KEY, 'report');
 
         const response = await fetch(`${CONFIG.API_BASE_URL}/files/${fileId}/report`, {
             method: 'POST',
@@ -311,14 +311,3 @@ async function handleReportAbuse() {
     }
 }
 
-/**
- * Get reCAPTCHA token
- */
-async function getRecaptchaToken(action) {
-    try {
-        return await grecaptcha.execute(CONFIG.RECAPTCHA_SITE_KEY, { action: action });
-    } catch (error) {
-        console.error('reCAPTCHA error:', error);
-        throw new Error('Failed to verify reCAPTCHA. Please refresh and try again.');
-    }
-}

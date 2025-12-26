@@ -1,18 +1,19 @@
 """Lambda function: Initialize file upload."""
 
 import hashlib
-import json
 import logging
 import os
 import time
 import uuid
 from typing import Any
 
+from shared.constants import TTL_TO_SECONDS, UPLOAD_URL_EXPIRY_SECONDS
 from shared.dynamo import create_file_record
 from shared.exceptions import ValidationError
+from shared.request_helpers import get_source_ip, parse_json_body
 from shared.response import error_response, success_response
 from shared.s3 import generate_upload_url
-from shared.security import verify_cloudfront_origin, verify_recaptcha
+from shared.security import require_cloudfront_and_recaptcha
 from shared.validation import validate_file_size, validate_ttl
 
 logger = logging.getLogger(__name__)
@@ -21,19 +22,14 @@ logger.setLevel(logging.INFO)
 # Environment variables
 BUCKET_NAME = os.environ.get("BUCKET_NAME")
 TABLE_NAME = os.environ.get("TABLE_NAME")
-MAX_FILE_SIZE = int(os.environ.get("MAX_FILE_SIZE", 104857600))
-
-# TTL mappings (hours to seconds)
-TTL_TO_SECONDS = {
-    "1h": 3600,
-    "12h": 43200,
-    "24h": 86400,
-}
 
 
+@require_cloudfront_and_recaptcha
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
     Initialize file upload.
+
+    Security verification (CloudFront origin + reCAPTCHA) is handled by decorator.
 
     Expected request body:
     {
@@ -50,25 +46,10 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     }
     """
     try:
-        # Verify request comes from CloudFront
-        if not verify_cloudfront_origin(event):
-            return error_response('Direct API access not allowed', 403)
-
         # Parse request body
-        body = json.loads(event.get("body", "{}"))
+        body = parse_json_body(event)
         file_size = body.get("file_size")
         ttl = body.get("ttl")
-        recaptcha_token = body.get("recaptcha_token")
-
-        # Verify reCAPTCHA token
-        source_ip = event.get("requestContext", {}).get("identity", {}).get("sourceIp")
-        is_valid, score, error_msg = verify_recaptcha(recaptcha_token, source_ip)
-
-        if not is_valid:
-            logger.warning(f"reCAPTCHA verification failed: {error_msg} (score: {score})")
-            return error_response(error_msg or "Bot activity detected", 403)
-
-        logger.info(f"reCAPTCHA verification succeeded with score: {score}")
 
         # Validate input
         validate_file_size(file_size)
@@ -83,7 +64,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         expires_at = int(time.time()) + ttl_seconds
 
         # Hash IP address (privacy)
-        source_ip = event.get("requestContext", {}).get("identity", {}).get("sourceIp", "unknown")
+        source_ip = get_source_ip(event)
         ip_hash = hashlib.sha256(source_ip.encode()).hexdigest()
 
         # Create DynamoDB record
@@ -96,12 +77,15 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             ip_hash=ip_hash,
         )
 
-        # Generate presigned upload URL (15 minutes)
+        # Generate presigned upload URL
         upload_url = generate_upload_url(
             bucket_name=BUCKET_NAME,
             s3_key=s3_key,
-            expires_in=900,
+            expires_in=UPLOAD_URL_EXPIRY_SECONDS,
         )
+
+        # Log successful upload initialization
+        logger.info(f"Upload initialized: file_id={file_id}, size={file_size}, ttl={ttl}, score={event.get('_recaptcha_score', 'N/A')}")
 
         return success_response({
             "file_id": file_id,

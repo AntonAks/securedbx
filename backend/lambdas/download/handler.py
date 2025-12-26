@@ -1,10 +1,10 @@
 """Lambda function: Download file."""
 
-import json
 import logging
 import os
 from typing import Any
 
+from shared.constants import DOWNLOAD_URL_EXPIRY_SECONDS
 from shared.dynamo import mark_downloaded
 from shared.exceptions import (
     FileAlreadyDownloadedError,
@@ -12,9 +12,10 @@ from shared.exceptions import (
     FileNotFoundError,
     ValidationError,
 )
+from shared.request_helpers import get_path_parameter
 from shared.response import error_response, success_response
 from shared.s3 import generate_download_url
-from shared.security import verify_cloudfront_origin, verify_recaptcha
+from shared.security import require_cloudfront_and_recaptcha
 from shared.validation import validate_file_id
 
 logger = logging.getLogger(__name__)
@@ -25,34 +26,19 @@ BUCKET_NAME = os.environ.get("BUCKET_NAME")
 TABLE_NAME = os.environ.get("TABLE_NAME")
 
 
+@require_cloudfront_and_recaptcha
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
     Mark file as downloaded and return download URL.
+
+    Security verification (CloudFront origin + reCAPTCHA) is handled by decorator.
 
     This uses atomic DynamoDB conditional update to ensure
     each file can only be downloaded once.
     """
     try:
-        # Verify request comes from CloudFront
-        if not verify_cloudfront_origin(event):
-            return error_response('Direct API access not allowed', 403)
-
-        # Parse request body
-        body = json.loads(event.get("body", "{}"))
-        recaptcha_token = body.get("recaptcha_token")
-
-        # Verify reCAPTCHA token
-        source_ip = event.get("requestContext", {}).get("identity", {}).get("sourceIp")
-        is_valid, score, error_msg = verify_recaptcha(recaptcha_token, source_ip)
-
-        if not is_valid:
-            logger.warning(f"reCAPTCHA verification failed for download: {error_msg} (score: {score})")
-            return error_response(error_msg or "Bot activity detected", 403)
-
-        logger.info(f"reCAPTCHA verification succeeded for download with score: {score}")
-
         # Extract file ID from path
-        file_id = event.get("pathParameters", {}).get("file_id")
+        file_id = get_path_parameter(event, "file_id")
 
         # Validate input
         validate_file_id(file_id)
@@ -60,14 +46,14 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         # Atomically mark as downloaded
         record = mark_downloaded(TABLE_NAME, file_id)
 
-        # Generate presigned download URL (5 minutes)
+        # Generate presigned download URL
         download_url = generate_download_url(
             bucket_name=BUCKET_NAME,
             s3_key=record["s3_key"],
-            expires_in=300,
+            expires_in=DOWNLOAD_URL_EXPIRY_SECONDS,
         )
 
-        logger.info(f"File download initiated: {file_id}")
+        logger.info(f"File download initiated: file_id={file_id}, score={event.get('_recaptcha_score', 'N/A')}")
 
         return success_response({
             "download_url": download_url,

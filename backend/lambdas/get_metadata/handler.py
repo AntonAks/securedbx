@@ -7,8 +7,9 @@ from typing import Any
 
 from shared.dynamo import get_file_record
 from shared.exceptions import ValidationError
+from shared.request_helpers import get_path_parameter
 from shared.response import error_response, success_response
-from shared.security import verify_cloudfront_origin
+from shared.security import require_cloudfront_only
 from shared.validation import validate_file_id
 
 logger = logging.getLogger(__name__)
@@ -18,19 +19,19 @@ logger.setLevel(logging.INFO)
 TABLE_NAME = os.environ.get("TABLE_NAME")
 
 
+@require_cloudfront_only
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
     Get file metadata.
 
+    Security verification (CloudFront origin only) is handled by decorator.
+    No reCAPTCHA needed for read-only endpoint.
+
     Returns file info if available, 404 if not found or expired.
     """
     try:
-        # Verify request comes from CloudFront
-        if not verify_cloudfront_origin(event):
-            return error_response('Direct API access not allowed', 403)
-
         # Extract file ID from path
-        file_id = event.get("pathParameters", {}).get("file_id")
+        file_id = get_path_parameter(event, "file_id")
 
         # Validate input
         validate_file_id(file_id)

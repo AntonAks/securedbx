@@ -5,6 +5,8 @@
 .terraform/
 .terraform.lock.hcl
 terraform.tfplan
+tfplan
+*.tfplan
 crash.log
 crash.*.log
 override.tf

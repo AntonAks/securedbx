@@ -120,10 +120,36 @@ python -m http.server 8000
 ### Deployment Status
 
 - ✅ Development environment deployed and operational
-- ✅ Live at: https://d21g35hqtnbz7i.cloudfront.net/
-- 🟡 Production deployment pending
+- ✅ Production environment deployed and operational
+- ✅ Comprehensive test suite (159+ tests, zero mocks)
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for troubleshooting and detailed instructions.
+
+## Testing
+
+sdbx has a comprehensive test suite with **159+ tests** and **ZERO mocks**:
+
+```bash
+# Run all tests (backend + frontend)
+make test
+
+# Run backend tests only (Python)
+make test-backend
+
+# Run frontend tests only (JavaScript)
+make test-frontend
+
+# Run backend tests with coverage report
+make test-backend-cov
+```
+
+**Test Coverage:**
+- **Backend**: 135+ tests covering validation, response formatting, JSON encoding, security
+- **Frontend**: 24 tests covering AES-256-GCM encryption, key management, URL encoding
+- **Coverage**: ~80% of shared modules
+- **Philosophy**: No mocks - testing real logic and real crypto
+
+See [TESTING.md](./TESTING.md) for detailed testing guide.
 
 ## Privacy Policy
 

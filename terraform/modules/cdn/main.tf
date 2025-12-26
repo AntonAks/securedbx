@@ -35,7 +35,7 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data:",
         "font-src 'self'",
-        "connect-src 'self' https://www.google.com/recaptcha/",
+        "connect-src 'self' https://www.google.com/recaptcha/ https://*.execute-api.eu-central-1.amazonaws.com https://*.s3.eu-central-1.amazonaws.com",
         "frame-src https://www.google.com/recaptcha/",
         "object-src 'none'",
         "base-uri 'self'",

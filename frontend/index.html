@@ -17,9 +17,17 @@
 
     <main>
         <section id="upload-section" class="card">
-            <h2>Share a File</h2>
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="file-tab">📁 Share File</button>
+                <button class="tab-btn" data-tab="text-tab">📝 Share Text</button>
+            </div>
 
-            <div id="drop-zone" class="drop-zone">
+            <!-- File Tab Panel -->
+            <div id="file-tab" class="tab-panel active">
+                <h2>Share a File</h2>
+
+                <div id="drop-zone" class="drop-zone">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
@@ -86,6 +94,71 @@
 
                 <button id="new-upload-btn" class="btn btn-outline">Upload Another File</button>
             </div>
+            </div>
+            <!-- End File Tab Panel -->
+
+            <!-- Text Tab Panel -->
+            <div id="text-tab" class="tab-panel">
+                <h2>Share Text Secret</h2>
+
+                <div class="text-input-wrapper">
+                    <textarea id="text-input" placeholder="Enter your secret text (max 1000 characters)..." rows="8" maxlength="1000"></textarea>
+                    <p class="text-muted"><span id="char-count">0</span> / 1000 characters</p>
+                </div>
+
+                <div class="ttl-selector">
+                    <label>Delete after:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="text-ttl" value="1h" checked>
+                            <span>1 hour</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="text-ttl" value="12h">
+                            <span>12 hours</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="text-ttl" value="24h">
+                            <span>24 hours</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button id="text-upload-btn" class="btn btn-primary" disabled>
+                    Encrypt & Share
+                </button>
+
+                <div id="text-progress-section" style="display: none;">
+                    <div class="progress-bar">
+                        <div id="text-progress-fill" class="progress-fill"></div>
+                    </div>
+                    <p id="text-progress-text" class="text-center text-muted"></p>
+                </div>
+
+                <div id="text-result-section" class="result-section" style="display: none;">
+                    <div class="alert alert-success">
+                        <p><strong>✓ Text secret shared successfully!</strong></p>
+                        <p class="text-muted">Share this link (it works only once):</p>
+                    </div>
+
+                    <div class="url-box">
+                        <input type="text" id="text-share-url" readonly>
+                        <button id="text-copy-btn" class="btn btn-secondary">Copy</button>
+                    </div>
+
+                    <div class="warning-box">
+                        <p><strong>⚠️ Important:</strong></p>
+                        <ul>
+                            <li>This link can only be used <strong>ONCE</strong></li>
+                            <li>Text will be deleted after viewing or expiration</li>
+                            <li>Save the link now - you won't see it again</li>
+                        </ul>
+                    </div>
+
+                    <button id="new-text-btn" class="btn btn-outline">Share Another Secret</button>
+                </div>
+            </div>
+            <!-- End Text Tab Panel -->
         </section>
 
         <section class="info-section">
@@ -122,6 +195,7 @@
     <script src="js/crypto.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/upload.js"></script>
+    <script src="js/text-upload.js"></script>
     <script src="js/init.js"></script>
 </body>
 </html>

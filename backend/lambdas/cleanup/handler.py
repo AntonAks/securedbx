@@ -22,7 +22,10 @@ TABLE_NAME = os.environ.get("TABLE_NAME")
 
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
-    Cleanup expired and downloaded files.
+    Cleanup expired and downloaded files and text secrets.
+
+    For files: Deletes from S3 and DynamoDB
+    For text: Deletes from DynamoDB only
 
     Runs on schedule (e.g., every hour via EventBridge).
     """
@@ -52,7 +55,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 if file_id == "STATS":
                     continue
 
-                s3_key = item["s3_key"]
+                content_type = item.get("content_type", "file")
                 expires_at = item.get("expires_at", 0)
                 downloaded = item.get("downloaded", False)
 
@@ -61,14 +64,16 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
                 if should_delete:
                     try:
-                        # Delete from S3
-                        delete_file(BUCKET_NAME, s3_key)
+                        # Delete from S3 only if it's a file (not text)
+                        if content_type == "file":
+                            s3_key = item["s3_key"]
+                            delete_file(BUCKET_NAME, s3_key)
 
-                        # Delete from DynamoDB
+                        # Delete from DynamoDB (both files and text)
                         delete_file_record(TABLE_NAME, file_id)
 
                         deleted_count += 1
-                        logger.info(f"Cleaned up file: {file_id}")
+                        logger.info(f"Cleaned up {content_type}: {file_id}")
 
                     except Exception as e:
                         error_count += 1

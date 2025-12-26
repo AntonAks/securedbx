@@ -43,7 +43,7 @@ async function loadStatistics() {
         const formattedSize = formatBytes(totalBytes);
 
         // Display the stats
-        statsElement.textContent = `${formattedDownloads} files shared • ${formattedSize} transferred`;
+        statsElement.textContent = `${formattedDownloads} shares • ${formattedSize} transferred`;
 
     } catch (error) {
         console.error('Failed to load statistics:', error);

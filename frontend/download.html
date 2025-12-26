@@ -11,7 +11,7 @@
 <body>
     <header>
         <h1>🔒 sdbx</h1>
-        <p class="tagline">Secure file download</p>
+        <p class="tagline">Secure download</p>
     </header>
 
     <main>
@@ -23,24 +23,24 @@
         </section>
 
         <section id="available-section" class="card" style="display: none;">
-            <h2>File Ready to Download</h2>
+            <h2 id="content-title">Ready to View</h2>
 
             <div class="file-details">
-                <p><strong>File Size:</strong> <span id="file-size"></span></p>
+                <p><strong id="size-label">Size:</strong> <span id="file-size"></span></p>
                 <p><strong>Expires:</strong> <span id="expires-in"></span></p>
             </div>
 
             <div class="warning-box">
                 <p><strong>⚠️ Warning:</strong></p>
                 <ul>
-                    <li>This file can only be downloaded <strong>ONCE</strong></li>
-                    <li>After clicking download, the link becomes invalid forever</li>
+                    <li id="warning-text">This content can only be viewed <strong>ONCE</strong></li>
+                    <li>After viewing, the link becomes invalid forever</li>
                     <li>Make sure you're ready before proceeding</li>
                 </ul>
             </div>
 
             <button id="download-btn" class="btn btn-primary">
-                Download Now
+                View Now
             </button>
 
             <div id="download-progress" style="display: none;">
@@ -72,6 +72,29 @@
             </div>
 
             <a href="index.html" class="btn btn-primary">Share Another File</a>
+        </section>
+
+        <section id="text-display-section" class="card" style="display: none;">
+            <div class="alert alert-success">
+                <h2>📝 Secret Text</h2>
+                <p class="text-muted">This text has been decrypted and can only be viewed once.</p>
+            </div>
+
+            <div class="text-display-wrapper">
+                <textarea id="decrypted-text" readonly rows="10"></textarea>
+                <button id="copy-text-btn" class="btn btn-secondary btn-auto">Copy Text</button>
+            </div>
+
+            <div class="warning-box">
+                <p><strong>⚠️ Important:</strong></p>
+                <ul>
+                    <li>This link is now <strong>invalid forever</strong></li>
+                    <li>The text has been deleted from our servers</li>
+                    <li>Save the text now if you need it</li>
+                </ul>
+            </div>
+
+            <a href="index.html" class="btn btn-primary">Share Another Secret</a>
         </section>
 
         <section class="info-section">

@@ -50,6 +50,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         # Return metadata
         return success_response({
             "file_id": record["file_id"],
+            "content_type": record.get("content_type", "file"),
             "file_size": record["file_size"],
             "available": not record.get("downloaded", False),
             "expires_at": record["expires_at"],

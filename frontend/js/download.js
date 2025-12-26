@@ -16,6 +16,10 @@ const elements = {
     availableSection: document.getElementById('available-section'),
     errorSection: document.getElementById('error-section'),
     successSection: document.getElementById('success-section'),
+    textDisplaySection: document.getElementById('text-display-section'),
+    contentTitle: document.getElementById('content-title'),
+    sizeLabel: document.getElementById('size-label'),
+    warningText: document.getElementById('warning-text'),
     fileSize: document.getElementById('file-size'),
     expiresIn: document.getElementById('expires-in'),
     downloadBtn: document.getElementById('download-btn'),
@@ -24,6 +28,8 @@ const elements = {
     progressText: document.getElementById('progress-text'),
     errorMessage: document.getElementById('error-message'),
     reportAbuse: document.getElementById('report-abuse'),
+    decryptedText: document.getElementById('decrypted-text'),
+    copyTextBtn: document.getElementById('copy-text-btn'),
 };
 
 // State
@@ -108,7 +114,22 @@ function showFileInfo(metadata) {
     elements.loadingSection.style.display = 'none';
     elements.availableSection.style.display = 'block';
 
-    // Display file size
+    // Update UI labels based on content type
+    const isText = metadata.content_type === 'text';
+
+    if (isText) {
+        elements.contentTitle.textContent = 'Secret Text Ready';
+        elements.sizeLabel.textContent = 'Text Size:';
+        elements.warningText.textContent = 'This text can only be viewed ONCE';
+        elements.downloadBtn.textContent = 'View Secret';
+    } else {
+        elements.contentTitle.textContent = 'File Ready to Download';
+        elements.sizeLabel.textContent = 'File Size:';
+        elements.warningText.textContent = 'This file can only be downloaded ONCE';
+        elements.downloadBtn.textContent = 'Download Now';
+    }
+
+    // Display size
     elements.fileSize.textContent = Utils.formatFileSize(metadata.file_size);
 
     // Display expiration time
@@ -154,32 +175,57 @@ async function handleDownload() {
         elements.downloadBtn.disabled = true;
         elements.downloadProgress.style.display = 'block';
 
-        // Request download URL
+        // Request download URL or text
         updateProgress(0, 'Preparing download...');
         const downloadData = await requestDownload();
 
-        // Download encrypted file
-        updateProgress(30, 'Downloading encrypted file...');
-        const encryptedData = await downloadFile(downloadData.download_url);
+        // Check content type
+        if (downloadData.content_type === 'text') {
+            // Handle text secret
+            updateProgress(50, 'Decrypting text...');
 
-        // Decrypt file
-        updateProgress(70, 'Decrypting file...');
-        const decryptedData = await CryptoModule.decryptFile(
-            encryptedData,
-            encryptionKey,
-            (progress) => updateProgress(70 + (progress * 0.2), 'Decrypting file...')
-        );
+            // Decode base64 encrypted text
+            const encryptedBytes = Uint8Array.from(atob(downloadData.encrypted_text), c => c.charCodeAt(0));
 
-        // Save file
-        updateProgress(90, 'Saving file...');
-        // Use stored filename or fallback to generic name
-        const downloadFileName = fileName || 'downloaded-file';
-        console.log('Saving file as:', downloadFileName);
-        saveFile(decryptedData, downloadFileName);
+            // Decrypt text
+            const decryptedData = await CryptoModule.decryptFile(
+                encryptedBytes,
+                encryptionKey,
+                (progress) => updateProgress(50 + (progress * 0.4), 'Decrypting text...')
+            );
 
-        // Show success
-        updateProgress(100, 'Download complete!');
-        showSuccess();
+            // Convert to string
+            const decoder = new TextDecoder();
+            const decryptedText = decoder.decode(decryptedData);
+
+            // Display text
+            updateProgress(100, 'Complete!');
+            showTextSecret(decryptedText);
+
+        } else {
+            // Handle file download
+            updateProgress(30, 'Downloading encrypted file...');
+            const encryptedData = await downloadFile(downloadData.download_url);
+
+            // Decrypt file
+            updateProgress(70, 'Decrypting file...');
+            const decryptedData = await CryptoModule.decryptFile(
+                encryptedData,
+                encryptionKey,
+                (progress) => updateProgress(70 + (progress * 0.2), 'Decrypting file...')
+            );
+
+            // Save file
+            updateProgress(90, 'Saving file...');
+            // Use stored filename or fallback to generic name
+            const downloadFileName = fileName || 'downloaded-file';
+            console.log('Saving file as:', downloadFileName);
+            saveFile(decryptedData, downloadFileName);
+
+            // Show success
+            updateProgress(100, 'Download complete!');
+            showSuccess();
+        }
 
     } catch (error) {
         console.error('Download error:', error);
@@ -276,6 +322,34 @@ function showSuccess() {
     clearInterval(countdownInterval);
     elements.availableSection.style.display = 'none';
     elements.successSection.style.display = 'block';
+}
+
+/**
+ * Show decrypted text secret
+ */
+function showTextSecret(text) {
+    clearInterval(countdownInterval);
+    elements.availableSection.style.display = 'none';
+    elements.textDisplaySection.style.display = 'block';
+    elements.decryptedText.value = text;
+
+    // Set up copy button
+    elements.copyTextBtn.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(text);
+
+            const originalText = elements.copyTextBtn.textContent;
+            elements.copyTextBtn.textContent = '✓ Copied!';
+
+            setTimeout(() => {
+                elements.copyTextBtn.textContent = originalText;
+            }, 2000);
+        } catch (error) {
+            // Fallback: select text
+            elements.decryptedText.select();
+            alert('Press Ctrl+C (or Cmd+C on Mac) to copy');
+        }
+    });
 }
 
 /**

@@ -24,30 +24,34 @@ def get_table(table_name: str):
 def create_file_record(
     table_name: str,
     file_id: str,
-    s3_key: str,
     file_size: int,
     expires_at: int,
     ip_hash: str,
+    content_type: str = "file",
+    s3_key: Optional[str] = None,
+    encrypted_text: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-    Create a new file record in DynamoDB.
+    Create a new file or text secret record in DynamoDB.
 
     Args:
         table_name: DynamoDB table name
-        file_id: Unique file ID (UUID)
-        s3_key: S3 object key
-        file_size: File size in bytes
-        expires_at: Unix timestamp when file expires
+        file_id: Unique file/secret ID (UUID)
+        file_size: File size in bytes (or encrypted text size)
+        expires_at: Unix timestamp when secret expires
         ip_hash: SHA256 hash of uploader IP
+        content_type: "file" or "text" (default: "file")
+        s3_key: S3 object key (required for files)
+        encrypted_text: Base64 encrypted text (required for text secrets)
 
     Returns:
-        Created file record
+        Created record
     """
     table = get_table(table_name)
 
     record = {
         "file_id": file_id,
-        "s3_key": s3_key,
+        "content_type": content_type,
         "file_size": file_size,
         "created_at": datetime.utcnow().isoformat(),
         "expires_at": expires_at,
@@ -56,8 +60,18 @@ def create_file_record(
         "report_count": 0,
     }
 
+    # Add type-specific fields
+    if content_type == "file":
+        if not s3_key:
+            raise ValueError("s3_key required for file content_type")
+        record["s3_key"] = s3_key
+    elif content_type == "text":
+        if not encrypted_text:
+            raise ValueError("encrypted_text required for text content_type")
+        record["encrypted_text"] = encrypted_text
+
     table.put_item(Item=record)
-    logger.info(f"Created file record: {file_id}")
+    logger.info(f"Created {content_type} record: {file_id}")
 
     return record
 

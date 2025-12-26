@@ -27,37 +27,44 @@ TABLE_NAME = os.environ.get("TABLE_NAME")
 @require_cloudfront_and_recaptcha
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
-    Initialize file upload.
+    Initialize file or text secret upload.
 
     Security verification (CloudFront origin + reCAPTCHA) is handled by decorator.
 
-    Expected request body:
+    Expected request body (file):
     {
+        "content_type": "file",
         "file_size": 1024,
         "ttl": "1h",
-        "recaptcha_token": "token-from-frontend"
+        "recaptcha_token": "token"
+    }
+
+    Expected request body (text):
+    {
+        "content_type": "text",
+        "encrypted_text": "base64-encrypted-text",
+        "ttl": "1h",
+        "recaptcha_token": "token"
     }
 
     Returns:
     {
         "file_id": "uuid",
-        "upload_url": "presigned-s3-url",
+        "upload_url": "presigned-s3-url",  // Only for files
         "expires_at": 1234567890
     }
     """
     try:
         # Parse request body
         body = parse_json_body(event)
-        file_size = body.get("file_size")
+        content_type = body.get("content_type", "file")
         ttl = body.get("ttl")
 
-        # Validate input
-        validate_file_size(file_size)
+        # Validate TTL
         validate_ttl(ttl)
 
-        # Generate unique file ID
+        # Generate unique ID
         file_id = str(uuid.uuid4())
-        s3_key = f"files/{file_id}"
 
         # Calculate expiration timestamp
         ttl_seconds = TTL_TO_SECONDS[ttl]
@@ -67,31 +74,67 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         source_ip = get_source_ip(event)
         ip_hash = hashlib.sha256(source_ip.encode()).hexdigest()
 
-        # Create DynamoDB record
-        create_file_record(
-            table_name=TABLE_NAME,
-            file_id=file_id,
-            s3_key=s3_key,
-            file_size=file_size,
-            expires_at=expires_at,
-            ip_hash=ip_hash,
-        )
+        # Handle based on content type
+        if content_type == "text":
+            # Text secret
+            encrypted_text = body.get("encrypted_text")
+            if not encrypted_text:
+                raise ValidationError("encrypted_text is required for text secrets")
 
-        # Generate presigned upload URL
-        upload_url = generate_upload_url(
-            bucket_name=BUCKET_NAME,
-            s3_key=s3_key,
-            expires_in=UPLOAD_URL_EXPIRY_SECONDS,
-        )
+            # Validate text length (base64 encoded)
+            if len(encrypted_text) > 10000:  # ~7KB base64 = ~5KB encrypted ~= 1000+ chars
+                raise ValidationError("Text secret too large (max 1000 characters)")
 
-        # Log successful upload initialization
-        logger.info(f"Upload initialized: file_id={file_id}, size={file_size}, ttl={ttl}, score={event.get('_recaptcha_score', 'N/A')}")
+            # Create DynamoDB record with encrypted text
+            create_file_record(
+                table_name=TABLE_NAME,
+                file_id=file_id,
+                file_size=len(encrypted_text),
+                expires_at=expires_at,
+                ip_hash=ip_hash,
+                content_type="text",
+                encrypted_text=encrypted_text,
+            )
 
-        return success_response({
-            "file_id": file_id,
-            "upload_url": upload_url,
-            "expires_at": expires_at,
-        })
+            logger.info(f"Text secret created: file_id={file_id}, size={len(encrypted_text)}, ttl={ttl}")
+
+            return success_response({
+                "file_id": file_id,
+                "expires_at": expires_at,
+            })
+
+        else:
+            # File upload (default)
+            file_size = body.get("file_size")
+            validate_file_size(file_size)
+
+            s3_key = f"files/{file_id}"
+
+            # Create DynamoDB record
+            create_file_record(
+                table_name=TABLE_NAME,
+                file_id=file_id,
+                file_size=file_size,
+                expires_at=expires_at,
+                ip_hash=ip_hash,
+                content_type="file",
+                s3_key=s3_key,
+            )
+
+            # Generate presigned upload URL
+            upload_url = generate_upload_url(
+                bucket_name=BUCKET_NAME,
+                s3_key=s3_key,
+                expires_in=UPLOAD_URL_EXPIRY_SECONDS,
+            )
+
+            logger.info(f"File upload initialized: file_id={file_id}, size={file_size}, ttl={ttl}")
+
+            return success_response({
+                "file_id": file_id,
+                "upload_url": upload_url,
+                "expires_at": expires_at,
+            })
 
     except ValidationError as e:
         logger.warning(f"Validation error: {e}")

@@ -29,12 +29,15 @@ TABLE_NAME = os.environ.get("TABLE_NAME")
 @require_cloudfront_and_recaptcha
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
-    Mark file as downloaded and return download URL.
+    Mark file or text secret as downloaded and return content.
 
     Security verification (CloudFront origin + reCAPTCHA) is handled by decorator.
 
+    For files: Returns presigned S3 download URL
+    For text: Returns encrypted text directly
+
     This uses atomic DynamoDB conditional update to ensure
-    each file can only be downloaded once.
+    each item can only be downloaded once.
     """
     try:
         # Extract file ID from path
@@ -53,19 +56,34 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             # Don't fail the download if counter increment fails
             logger.warning(f"Failed to increment download counter: {e}")
 
-        # Generate presigned download URL
-        download_url = generate_download_url(
-            bucket_name=BUCKET_NAME,
-            s3_key=record["s3_key"],
-            expires_in=DOWNLOAD_URL_EXPIRY_SECONDS,
-        )
+        # Check content type and return appropriate response
+        content_type = record.get("content_type", "file")
 
-        logger.info(f"File download initiated: file_id={file_id}, score={event.get('_recaptcha_score', 'N/A')}")
+        if content_type == "text":
+            # Text secret - return encrypted text directly
+            logger.info(f"Text secret download initiated: file_id={file_id}, score={event.get('_recaptcha_score', 'N/A')}")
 
-        return success_response({
-            "download_url": download_url,
-            "file_size": record["file_size"],
-        })
+            return success_response({
+                "content_type": "text",
+                "encrypted_text": record["encrypted_text"],
+                "file_size": record["file_size"],
+            })
+
+        else:
+            # File - generate presigned download URL
+            download_url = generate_download_url(
+                bucket_name=BUCKET_NAME,
+                s3_key=record["s3_key"],
+                expires_in=DOWNLOAD_URL_EXPIRY_SECONDS,
+            )
+
+            logger.info(f"File download initiated: file_id={file_id}, score={event.get('_recaptcha_score', 'N/A')}")
+
+            return success_response({
+                "content_type": "file",
+                "download_url": download_url,
+                "file_size": record["file_size"],
+            })
 
     except ValidationError as e:
         logger.warning(f"Validation error: {e}")

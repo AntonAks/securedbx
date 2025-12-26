@@ -20,7 +20,7 @@ resource "aws_api_gateway_request_validator" "main" {
 
 # Request Models - JSON schemas for request validation
 
-# Upload Init Request Model
+# Upload Init Request Model (supports both files and text)
 resource "aws_api_gateway_model" "upload_request" {
   rest_api_id  = aws_api_gateway_rest_api.main.id
   name         = "UploadInitRequest"
@@ -30,10 +30,19 @@ resource "aws_api_gateway_model" "upload_request" {
     "$schema" = "http://json-schema.org/draft-04/schema#"
     type      = "object"
     properties = {
+      content_type = {
+        type = "string"
+        enum = ["file", "text"]
+      }
       file_size = {
         type    = "integer"
         minimum = 1
         maximum = var.max_file_size_bytes
+      }
+      encrypted_text = {
+        type      = "string"
+        minLength = 1
+        maxLength = 10000
       }
       ttl = {
         type = "string"
@@ -45,7 +54,7 @@ resource "aws_api_gateway_model" "upload_request" {
         maxLength = 2000
       }
     }
-    required = ["file_size", "ttl", "recaptcha_token"]
+    required = ["ttl", "recaptcha_token"]
   })
 }
 
@@ -427,11 +436,12 @@ resource "aws_api_gateway_method" "upload_init_post" {
   resource_id          = aws_api_gateway_resource.upload_init.id
   http_method          = "POST"
   authorization        = "NONE"
-  request_validator_id = aws_api_gateway_request_validator.main.id
+  # Disable request validation - handled in Lambda
+  # request_validator_id = aws_api_gateway_request_validator.main.id
 
-  request_models = {
-    "application/json" = aws_api_gateway_model.upload_request.name
-  }
+  # request_models = {
+  #   "application/json" = aws_api_gateway_model.upload_request.name
+  # }
 }
 
 resource "aws_api_gateway_integration" "upload_init" {
@@ -579,6 +589,8 @@ resource "aws_api_gateway_deployment" "main" {
       aws_api_gateway_integration.report.id,
       aws_api_gateway_method.stats_get.id,
       aws_api_gateway_integration.stats.id,
+      # Force redeployment - increment this number when needed
+      "v2",
     ]))
   }
 

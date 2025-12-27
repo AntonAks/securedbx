@@ -182,7 +182,7 @@ async function handleDownload() {
         // Check content type
         if (downloadData.content_type === 'text') {
             // Handle text secret
-            updateProgress(50, 'Decrypting text...');
+            updateProgress(50, 'Decrypting text... 0%');
 
             // Decode base64 encrypted text
             const encryptedBytes = Uint8Array.from(atob(downloadData.encrypted_text), c => c.charCodeAt(0));
@@ -191,7 +191,10 @@ async function handleDownload() {
             const decryptedData = await CryptoModule.decryptFile(
                 encryptedBytes,
                 encryptionKey,
-                (progress) => updateProgress(50 + (progress * 0.4), 'Decrypting text...')
+                (progress) => {
+                    const percent = 50 + (progress * 0.4);
+                    updateProgress(percent, `Decrypting text... ${Math.round(progress)}%`);
+                }
             );
 
             // Convert to string
@@ -208,11 +211,14 @@ async function handleDownload() {
             const encryptedData = await downloadFile(downloadData.download_url);
 
             // Decrypt file
-            updateProgress(70, 'Decrypting file...');
+            updateProgress(70, 'Decrypting file... 0%');
             const decryptedData = await CryptoModule.decryptFile(
                 encryptedData,
                 encryptionKey,
-                (progress) => updateProgress(70 + (progress * 0.2), 'Decrypting file...')
+                (progress) => {
+                    const percent = 70 + (progress * 0.2);
+                    updateProgress(percent, `Decrypting file... ${Math.round(progress)}%`);
+                }
             );
 
             // Save file
@@ -266,17 +272,45 @@ async function requestDownload() {
 }
 
 /**
- * Download file from S3
+ * Download file from S3 with real progress tracking
  */
 async function downloadFile(url) {
-    const response = await fetch(url);
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.responseType = 'arraybuffer';
 
-    if (!response.ok) {
-        throw new Error(`File download failed: ${response.status}`);
-    }
+        // Track download progress
+        xhr.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                // Map to 30-70% of overall progress
+                const overallPercent = 30 + (percentComplete * 0.4);
+                updateProgress(overallPercent, `Downloading... ${percentComplete.toFixed(1)}%`);
+            }
+        };
 
-    const arrayBuffer = await response.arrayBuffer();
-    return new Uint8Array(arrayBuffer);
+        // Handle completion
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(new Uint8Array(xhr.response));
+            } else {
+                reject(new Error(`File download failed: ${xhr.status}`));
+            }
+        };
+
+        // Handle errors
+        xhr.onerror = () => {
+            reject(new Error('Network error during download'));
+        };
+
+        xhr.ontimeout = () => {
+            reject(new Error('Download timeout'));
+        };
+
+        // Configure and send request
+        xhr.open('GET', url);
+        xhr.send();
+    });
 }
 
 /**

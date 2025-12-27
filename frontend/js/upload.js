@@ -122,11 +122,14 @@ async function handleUpload() {
         const key = await CryptoModule.generateKey();
 
         // Encrypt file
-        updateProgress(20, 'Encrypting file...');
+        updateProgress(20, 'Encrypting file... 0%');
         const encryptedData = await CryptoModule.encryptFile(
             selectedFile,
             key,
-            (progress) => updateProgress(20 + (progress * 0.3), 'Encrypting file...')
+            (progress) => {
+                const percent = 20 + (progress * 0.3);
+                updateProgress(percent, `Encrypting file... ${Math.round(progress)}%`);
+            }
         );
 
         // Initialize upload
@@ -185,20 +188,45 @@ async function initializeUpload(fileSize, fileName, ttl) {
 }
 
 /**
- * Upload encrypted data to S3
+ * Upload encrypted data to S3 with real progress tracking
  */
 async function uploadToS3(presignedUrl, data) {
-    const response = await fetch(presignedUrl, {
-        method: 'PUT',
-        body: data,
-        headers: {
-            'Content-Type': 'application/octet-stream',
-        },
-    });
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
 
-    if (!response.ok) {
-        throw new Error(`S3 upload failed: ${response.status}`);
-    }
+        // Track upload progress
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                // Map to 60-90% of overall progress
+                const overallPercent = 60 + (percentComplete * 0.3);
+                updateProgress(overallPercent, `Uploading... ${percentComplete.toFixed(1)}%`);
+            }
+        };
+
+        // Handle completion
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve();
+            } else {
+                reject(new Error(`S3 upload failed: ${xhr.status}`));
+            }
+        };
+
+        // Handle errors
+        xhr.onerror = () => {
+            reject(new Error('Network error during upload'));
+        };
+
+        xhr.ontimeout = () => {
+            reject(new Error('Upload timeout'));
+        };
+
+        // Configure and send request
+        xhr.open('PUT', presignedUrl);
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+        xhr.send(data);
+    });
 }
 
 /**

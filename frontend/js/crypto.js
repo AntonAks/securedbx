@@ -133,41 +133,114 @@ const CryptoModule = (function() {
     }
 
     /**
-     * Encrypt file
+     * Encrypt file using Web Worker (non-blocking)
      * @param {File} file - File to encrypt
      * @param {CryptoKey} key - Encryption key
      * @param {function(number): void} onProgress - Progress callback (0-100)
      * @returns {Promise<Uint8Array>} Encrypted data
      */
     async function encryptFile(file, key, onProgress) {
-        if (onProgress) onProgress(0);
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Create worker
+                const worker = new Worker('/js/crypto-worker.js');
 
-        const arrayBuffer = await file.arrayBuffer();
+                // Handle worker messages
+                worker.onmessage = function(e) {
+                    const { type, percent, result, error } = e.data;
 
-        if (onProgress) onProgress(50);
+                    if (type === 'progress') {
+                        if (onProgress) {
+                            // Map worker progress (0-100) to overall progress (10-100)
+                            // Reserve 0-10% for file reading
+                            const overallProgress = 10 + (percent * 0.9);
+                            onProgress(overallProgress);
+                        }
+                    } else if (type === 'complete') {
+                        worker.terminate();
+                        resolve(new Uint8Array(result));
+                    } else if (type === 'error') {
+                        worker.terminate();
+                        reject(new Error(error));
+                    }
+                };
 
-        const encrypted = await encrypt(arrayBuffer, key);
+                worker.onerror = function(error) {
+                    worker.terminate();
+                    reject(error);
+                };
 
-        if (onProgress) onProgress(100);
+                // Read file
+                if (onProgress) onProgress(0);
+                const arrayBuffer = await file.arrayBuffer();
+                if (onProgress) onProgress(10);
 
-        return encrypted;
+                // Export key to raw bytes
+                const keyData = await exportKey(key);
+
+                // Send to worker
+                worker.postMessage({
+                    action: 'encrypt',
+                    data: arrayBuffer,
+                    keyData: keyData
+                }, [arrayBuffer]); // Transfer ownership for efficiency
+
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 
     /**
-     * Decrypt file
+     * Decrypt file using Web Worker (non-blocking)
      * @param {Uint8Array} encryptedData - Encrypted data
      * @param {CryptoKey} key - Decryption key
      * @param {function(number): void} onProgress - Progress callback (0-100)
      * @returns {Promise<ArrayBuffer>} Decrypted data
      */
     async function decryptFile(encryptedData, key, onProgress) {
-        if (onProgress) onProgress(0);
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Create worker
+                const worker = new Worker('/js/crypto-worker.js');
 
-        const decrypted = await decrypt(encryptedData, key);
+                // Handle worker messages
+                worker.onmessage = function(e) {
+                    const { type, percent, result, error } = e.data;
 
-        if (onProgress) onProgress(100);
+                    if (type === 'progress') {
+                        if (onProgress) {
+                            onProgress(percent);
+                        }
+                    } else if (type === 'complete') {
+                        worker.terminate();
+                        resolve(result);
+                    } else if (type === 'error') {
+                        worker.terminate();
+                        reject(new Error(error));
+                    }
+                };
 
-        return decrypted;
+                worker.onerror = function(error) {
+                    worker.terminate();
+                    reject(error);
+                };
+
+                // Export key to raw bytes
+                if (onProgress) onProgress(0);
+                const keyData = await exportKey(key);
+
+                // Send to worker
+                worker.postMessage({
+                    action: 'decrypt',
+                    data: encryptedData.buffer,
+                    keyData: keyData
+                }, [encryptedData.buffer]); // Transfer ownership for efficiency
+
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 
     return {

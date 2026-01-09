@@ -19,6 +19,7 @@ LAMBDAS=(
   "get_metadata:get-metadata"
   "get_stats:get-stats"
   "download:download"
+  "confirm_download:confirm-download"
   "cleanup:cleanup"
   "report_abuse:report-abuse"
 )

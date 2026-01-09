@@ -673,6 +673,7 @@ resource "aws_api_gateway_deployment" "main" {
     aws_api_gateway_integration.upload_init,
     aws_api_gateway_integration.metadata,
     aws_api_gateway_integration.download,
+    aws_api_gateway_integration.confirm,
     aws_api_gateway_integration.report,
     aws_api_gateway_integration.stats,
   ]

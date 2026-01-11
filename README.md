@@ -13,6 +13,15 @@
 - **Self-destructing** - Content expires after 1, 12, or 24 hours
 - **Privacy-first** - Built with privacy as the core principle
 
+## This Service Is For You If...
+
+- You want to share a file or secret and be certain it disappears forever after viewing
+- You don't trust services that store your files on their servers indefinitely
+- You need to securely share passwords, API keys, or confidential documents without registration
+- You value privacy and full control over your data — no logs, no tracking
+- You need a simple "view once → gone" approach, with no history or repeated access
+
+
 ## How It Works
 
 ### Uploading Files

@@ -1,4 +1,4 @@
-.PHONY: help bootstrap deploy-dev deploy-prod destroy-dev destroy-prod destroy-all plan-dev plan-prod init-dev init-prod clean status test test-backend test-frontend test-backend-cov
+.PHONY: help bootstrap deploy-dev deploy-prod destroy-dev destroy-prod destroy-all plan-dev plan-prod init-dev init-prod clean test test-backend test-frontend test-backend-cov
 
 # Default target
 help: ## Show this help message
@@ -110,39 +110,6 @@ init-prod: ## Initialize Terraform for prod
 		cp -n terraform.tfvars.example terraform.tfvars 2>/dev/null || true && \
 		terraform init -backend-config="bucket=$$BACKEND_BUCKET"
 
-output-dev: ## Show dev environment outputs
-	@cd terraform/environments/dev && \
-		terraform output
-
-output-prod: ## Show prod environment outputs
-	@cd terraform/environments/prod && \
-		terraform output
-
-status: ## Show deployment status
-	@echo "📊 sdbx Deployment Status"
-	@echo ""
-	@echo "AWS Account:"
-	@aws sts get-caller-identity --query 'Account' --output text 2>/dev/null || echo "  ⚠️  Not configured"
-	@echo ""
-	@echo "Terraform Backend:"
-	@aws s3 ls sdbx-terraform-state 2>/dev/null && echo "  ✓ Backend exists" || echo "  ✗ Backend not created (run: make bootstrap)"
-	@echo ""
-	@echo "Dev Environment:"
-	@if [ -f terraform/environments/dev/.terraform/terraform.tfstate ]; then \
-		echo "  ✓ Initialized"; \
-		cd terraform/environments/dev && terraform workspace show 2>/dev/null || true; \
-	else \
-		echo "  ✗ Not initialized (run: make init-dev)"; \
-	fi
-	@echo ""
-	@echo "Prod Environment:"
-	@if [ -f terraform/environments/prod/.terraform/terraform.tfstate ]; then \
-		echo "  ✓ Initialized"; \
-		cd terraform/environments/prod && terraform workspace show 2>/dev/null || true; \
-	else \
-		echo "  ✗ Not initialized (run: make init-prod)"; \
-	fi
-
 validate-dev: ## Validate dev Terraform configuration
 	@cd terraform/environments/dev && \
 		terraform validate
@@ -221,20 +188,3 @@ deploy-frontend-prod: ## Deploy frontend to prod S3
 		aws s3 sync frontend/ s3://$$BUCKET/ --delete && \
 		DIST_ID=$$(cd terraform/environments/prod && terraform output -raw cloudfront_distribution_id) && \
 		aws cloudfront create-invalidation --distribution-id $$DIST_ID --paths "/*"
-
-logs-dev: ## Show recent Lambda logs from dev
-	@FUNCTIONS=$$(cd terraform/environments/dev && terraform output -json lambda_function_arns | jq -r 'keys[]') && \
-		for func in $$FUNCTIONS; do \
-			echo "📋 Logs for sdbx-dev-$$func:"; \
-			aws logs tail /aws/lambda/sdbx-dev-$$func --since 1h --follow=false 2>/dev/null | head -20 || echo "  No logs"; \
-			echo ""; \
-		done
-
-costs: ## Estimate monthly costs
-	@echo "💰 Estimated Monthly Costs"
-	@echo ""
-	@echo "Dev Environment:  ~\$$5-10/month"
-	@echo "Prod Environment: ~\$$20-100/month (traffic dependent)"
-	@echo ""
-	@echo "For exact costs, check AWS Cost Explorer:"
-	@echo "https://console.aws.amazon.com/cost-management/home"

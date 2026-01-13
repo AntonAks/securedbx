@@ -56,7 +56,7 @@
 7. Content is automatically deleted from the server
 8. The link becomes invalid forever
 
-**Network Failure Protection**: If your download is interrupted (network error, browser crash), you have 10 minutes to retry using the same link. This ensures you don't lose access due to temporary technical issues while maintaining one-time download security.
+**Network Failure Protection**: If the download is interrupted (network error, browser crash), you can try again in 10 minutes. To retry using the same link. This ensures that you do not lose access due to temporary technical problems, while maintaining the security of a one-time download.
 
 ## Security
 
@@ -84,8 +84,6 @@
 - Minimum score threshold: 0.5 (adjustable)
 - Lambda Layer for efficient dependency management
 
-See [SECURITY_PLAN.md](./SECURITY_PLAN.md) for complete security implementation details.
-
 ## Limitations
 
 - Maximum file size: 500 MB
@@ -102,9 +100,7 @@ See [SECURITY_PLAN.md](./SECURITY_PLAN.md) for complete security implementation 
 - **Infrastructure**: Terraform (Infrastructure as Code)
 
 ## Development
-
 See [ROADMAP.md](./ROADMAP.md) for development progress and plans.
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
 ### Prerequisites
 
@@ -148,9 +144,6 @@ python -m http.server 8000
 
 - ✅ Development environment deployed and operational
 - ✅ Production environment deployed and operational
-- ✅ Comprehensive test suite (159+ tests, zero mocks)
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for troubleshooting and detailed instructions.
 
 ## Testing
 
@@ -174,9 +167,7 @@ make test-backend-cov
 - **Backend**: 135+ tests covering validation, response formatting, JSON encoding, security
 - **Frontend**: 24 tests covering AES-256-GCM encryption, key management, URL encoding
 - **Coverage**: ~80% of shared modules
-- **Philosophy**: No mocks - testing real logic and real crypto
 
-See [TESTING.md](./TESTING.md) for detailed testing guide.
 
 ## Privacy Policy
 

@@ -1,4 +1,4 @@
-.PHONY: help bootstrap deploy-dev deploy-prod destroy-dev destroy-prod destroy-all plan-dev plan-prod init-dev init-prod clean test test-backend test-frontend test-backend-cov
+.PHONY: help bootstrap deploy-dev deploy-prod destroy-dev destroy-prod destroy-all plan-dev plan-prod init-dev init-prod clean test test-backend test-frontend test-backend-cov install-frontend-deps build-frontend dev-frontend
 
 # Default target
 help: ## Show this help message
@@ -22,10 +22,28 @@ build-lambdas-dev: ## Build Lambda deployment packages for dev
 build-lambdas-prod: ## Build Lambda deployment packages for prod
 	@./scripts/build-lambdas.sh prod
 
+install-frontend-deps: ## Install frontend dependencies (Tailwind CSS)
+	@if [ ! -d "node_modules" ]; then \
+		echo "📦 Installing frontend dependencies..."; \
+		npm install; \
+	else \
+		echo "✓ Frontend dependencies already installed"; \
+	fi
+
+build-frontend: install-frontend-deps ## Build frontend CSS with Tailwind
+	@echo "🎨 Building Tailwind CSS..."
+	@npm run build:css
+	@echo "  ✓ CSS built to frontend/css/output.css"
+
+dev-frontend: install-frontend-deps ## Watch mode for frontend development
+	@echo "👀 Watching frontend CSS changes..."
+	@echo "Press Ctrl+C to stop"
+	@npm run dev:css
+
 deploy-dev-infra: build-lambdas-dev ## Deploy dev infrastructure only (without frontend)
 	@./scripts/deploy-dev.sh
 
-deploy-dev: build-lambdas-dev ## Deploy dev environment (backend + frontend)
+deploy-dev: build-lambdas-dev build-frontend ## Deploy dev environment (backend + frontend)
 	@echo "🚀 Deploying to DEVELOPMENT..."
 	@echo ""
 	@ACCOUNT_ID=$$(aws sts get-caller-identity --query Account --output text) && \
@@ -43,7 +61,7 @@ deploy-dev: build-lambdas-dev ## Deploy dev environment (backend + frontend)
 			echo "📦 Deploying frontend..." && \
 			cd ../../.. && \
 			BUCKET=$$(cd terraform/environments/dev && terraform output -raw static_bucket_name) && \
-			aws s3 sync frontend/ s3://$$BUCKET/ --delete && \
+			aws s3 sync frontend/ s3://$$BUCKET/ --delete --exclude "tests/*" && \
 			DIST_ID=$$(cd terraform/environments/dev && terraform output -raw cloudfront_distribution_id) && \
 			aws cloudfront create-invalidation --distribution-id $$DIST_ID --paths "/*" && \
 			echo "" && \
@@ -55,7 +73,7 @@ deploy-dev: build-lambdas-dev ## Deploy dev environment (backend + frontend)
 			echo "❌ Aborted" && rm -f tfplan; \
 		fi
 
-deploy-prod: build-lambdas-prod ## Deploy prod environment (backend + frontend)
+deploy-prod: build-lambdas-prod build-frontend ## Deploy prod environment (backend + frontend)
 	@echo "🚀 Deploying to PRODUCTION..."
 	@ACCOUNT_ID=$$(aws sts get-caller-identity --query Account --output text) && \
 		BACKEND_BUCKET="sdbx-terraform-state-$$ACCOUNT_ID" && \
@@ -71,7 +89,7 @@ deploy-prod: build-lambdas-prod ## Deploy prod environment (backend + frontend)
 			echo "📦 Deploying frontend..." && \
 			cd ../../.. && \
 			BUCKET=$$(cd terraform/environments/prod && terraform output -raw static_bucket_name) && \
-			aws s3 sync frontend/ s3://$$BUCKET/ --delete && \
+			aws s3 sync frontend/ s3://$$BUCKET/ --delete --exclude "tests/*" && \
 			DIST_ID=$$(cd terraform/environments/prod && terraform output -raw cloudfront_distribution_id) && \
 			aws cloudfront create-invalidation --distribution-id $$DIST_ID --paths "/*" && \
 			echo "✅ Deployment complete!"; \
@@ -177,14 +195,18 @@ install-backend: ## Install backend dependencies
 	@cd backend && \
 		pip install -r requirements.txt
 
-deploy-frontend-dev: ## Deploy frontend to dev S3
+deploy-frontend-dev: build-frontend ## Deploy frontend to dev S3
+	@echo "📦 Deploying frontend to DEV..."
 	@BUCKET=$$(cd terraform/environments/dev && terraform output -raw static_bucket_name) && \
-		aws s3 sync frontend/ s3://$$BUCKET/ --delete && \
+		aws s3 sync frontend/ s3://$$BUCKET/ --delete --exclude "tests/*" && \
 		DIST_ID=$$(cd terraform/environments/dev && terraform output -raw cloudfront_distribution_id) && \
-		aws cloudfront create-invalidation --distribution-id $$DIST_ID --paths "/*"
+		aws cloudfront create-invalidation --distribution-id $$DIST_ID --paths "/*" && \
+		echo "✅ Frontend deployed to dev"
 
-deploy-frontend-prod: ## Deploy frontend to prod S3
+deploy-frontend-prod: build-frontend ## Deploy frontend to prod S3
+	@echo "📦 Deploying frontend to PROD..."
 	@BUCKET=$$(cd terraform/environments/prod && terraform output -raw static_bucket_name) && \
-		aws s3 sync frontend/ s3://$$BUCKET/ --delete && \
+		aws s3 sync frontend/ s3://$$BUCKET/ --delete --exclude "tests/*" && \
 		DIST_ID=$$(cd terraform/environments/prod && terraform output -raw cloudfront_distribution_id) && \
-		aws cloudfront create-invalidation --distribution-id $$DIST_ID --paths "/*"
+		aws cloudfront create-invalidation --distribution-id $$DIST_ID --paths "/*" && \
+		echo "✅ Frontend deployed to prod"

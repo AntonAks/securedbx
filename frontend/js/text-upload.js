@@ -55,11 +55,13 @@
      * @param {Event} e - Click event
      */
     function handleTabSwitch(e) {
-        const targetTab = e.target.dataset.tab;
+        // Use currentTarget to always get the button, not the clicked child element (SVG/text)
+        const button = e.currentTarget;
+        const targetTab = button.dataset.tab;
 
         // Update tab buttons
         tabButtons.forEach(btn => btn.classList.remove('active'));
-        e.target.classList.add('active');
+        button.classList.add('active');
 
         // Update tab panels
         tabPanels.forEach(panel => {

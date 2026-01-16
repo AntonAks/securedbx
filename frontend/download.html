@@ -5,112 +5,121 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download File - sdbx</title>
     <meta name="description" content="Download your securely shared file">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/output.css">
+    <script src="js/theme-toggle.js"></script>
+    <script src="js/header.js"></script>
     <script src="https://www.google.com/recaptcha/api.js?render=6LdulTIsAAAAAJdhvyMU6B1og7GE7d5DySrQUQiv"></script>
 </head>
-<body>
-    <header>
-        <h1>🔒 sdbx</h1>
-        <p class="tagline">Secure download</p>
-    </header>
+<body class="min-h-screen flex flex-col bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-200">
+    <!-- Header (rendered by js/header.js) -->
+    <header class="bg-gray-100 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800"></header>
 
-    <main>
-        <section id="loading-section" class="card">
-            <div class="loading">
-                <div class="spinner"></div>
-                <p>Checking file availability...</p>
+    <!-- Main Content -->
+    <main class="flex-1 max-w-3xl mx-auto px-6 py-12 w-full">
+        <!-- Loading Section -->
+        <section id="loading-section" class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-12">
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 border-4 border-gray-300 dark:border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+                <p class="text-gray-600 dark:text-slate-300">Checking file availability...</p>
             </div>
         </section>
 
-        <section id="available-section" class="card" style="display: none;">
-            <h2 id="content-title">Ready to View</h2>
+        <!-- Available Section -->
+        <section id="available-section" class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8" style="display: none;">
+            <h2 id="content-title" class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-6">Ready to View</h2>
 
-            <div class="file-details">
-                <p><strong id="size-label">Size:</strong> <span id="file-size"></span></p>
-                <p><strong>Expires:</strong> <span id="expires-in"></span></p>
+            <div class="bg-gray-100 dark:bg-slate-800/50 rounded-lg p-4 mb-6 space-y-2">
+                <p class="text-gray-600 dark:text-slate-300"><strong id="size-label" class="text-gray-900 dark:text-slate-100">Size:</strong> <span id="file-size" class="text-gray-500 dark:text-slate-400"></span></p>
+                <p class="text-gray-600 dark:text-slate-300"><strong class="text-gray-900 dark:text-slate-100">Expires:</strong> <span id="expires-in" class="text-gray-500 dark:text-slate-400"></span></p>
             </div>
 
-            <div class="warning-box">
-                <p><strong>⚠️ Warning:</strong></p>
-                <ul>
-                    <li id="warning-text">This content can only be viewed <strong>ONCE</strong></li>
+            <div class="bg-yellow-500/10 border border-yellow-500 rounded-lg p-4 mb-6">
+                <p class="text-yellow-500 font-semibold mb-2">⚠️ Warning:</p>
+                <ul class="text-gray-700 dark:text-slate-300 text-sm space-y-1 ml-5 list-disc">
+                    <li id="warning-text">This content can only be viewed <strong class="text-gray-900 dark:text-white">ONCE</strong></li>
                     <li>After viewing, the link becomes invalid forever</li>
                     <li>Make sure you're ready before proceeding</li>
                 </ul>
             </div>
 
-            <button id="download-btn" class="btn btn-primary">
+            <button id="download-btn" class="btn-primary mb-6">
                 View Now
             </button>
 
-            <div id="download-progress" style="display: none;">
-                <div class="progress-bar">
-                    <div id="progress-fill" class="progress-fill"></div>
+            <div id="download-progress" style="display: none;" class="mb-6">
+                <div class="h-2 bg-gray-200 dark:bg-slate-800 rounded-full overflow-hidden mb-2">
+                    <div id="progress-fill" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div>
                 </div>
-                <p id="progress-text" class="text-center text-muted"></p>
+                <p id="progress-text" class="text-center text-sm text-gray-500 dark:text-slate-400"></p>
             </div>
 
-            <p class="text-center text-muted">
-                <a href="#" id="report-abuse">Report abuse</a>
+            <p class="text-center">
+                <a href="#" id="report-abuse" class="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 transition">Report abuse</a>
             </p>
         </section>
 
-        <section id="error-section" class="card" style="display: none;">
-            <div class="alert alert-error">
-                <h2>Unable to Download</h2>
-                <p id="error-message"></p>
+        <!-- Error Section -->
+        <section id="error-section" class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8" style="display: none;">
+            <div class="bg-red-500/10 border border-red-500 rounded-lg p-4 mb-6">
+                <h2 class="text-red-500 font-semibold text-xl mb-2">Unable to Download</h2>
+                <p id="error-message" class="text-gray-700 dark:text-slate-300"></p>
             </div>
 
-            <a href="index.html" class="btn btn-outline">Share a New File</a>
+            <a href="index.html" class="btn-outline block">Share a New File</a>
         </section>
 
-        <section id="success-section" class="card" style="display: none;">
-            <div class="alert alert-success">
-                <h2>✓ Download Complete</h2>
-                <p>Your file has been decrypted and saved.</p>
-                <p class="text-muted">This link is now invalid and the file has been deleted from our servers.</p>
+        <!-- Success Section (File Downloaded) -->
+        <section id="success-section" class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8" style="display: none;">
+            <div class="bg-green-500/10 border border-green-500 rounded-lg p-4 mb-6">
+                <h2 class="text-green-500 font-semibold text-xl mb-2">✓ Download Complete</h2>
+                <p class="text-gray-700 dark:text-slate-300 mb-2">Your file has been decrypted and saved.</p>
+                <p class="text-gray-500 dark:text-slate-400 text-sm">This link is now invalid and the file has been deleted from our servers.</p>
             </div>
 
-            <a href="index.html" class="btn btn-primary">Share Another File</a>
+            <a href="index.html" class="btn-primary block">Share Another File</a>
         </section>
 
-        <section id="text-display-section" class="card" style="display: none;">
-            <div class="alert alert-success">
-                <h2>📝 Secret Text</h2>
-                <p class="text-muted">This text has been decrypted and can only be viewed once.</p>
+        <!-- Text Display Section -->
+        <section id="text-display-section" class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8" style="display: none;">
+            <div class="bg-green-500/10 border border-green-500 rounded-lg p-4 mb-6">
+                <h2 class="text-green-500 font-semibold text-xl mb-2">📝 Secret Text</h2>
+                <p class="text-gray-500 dark:text-slate-400 text-sm">This text has been decrypted and can only be viewed once.</p>
             </div>
 
-            <div class="text-display-wrapper">
-                <textarea id="decrypted-text" readonly rows="10"></textarea>
-                <button id="copy-text-btn" class="btn btn-secondary btn-auto">Copy Text</button>
+            <div class="mb-6">
+                <textarea id="decrypted-text" readonly rows="10" class="w-full px-4 py-3 bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-200 font-mono text-sm mb-4 resize-vertical focus:outline-none focus:border-blue-500"></textarea>
+                <button id="copy-text-btn" class="btn-secondary btn-auto">Copy Text</button>
             </div>
 
-            <div class="warning-box">
-                <p><strong>⚠️ Important:</strong></p>
-                <ul>
-                    <li>This link is now <strong>invalid forever</strong></li>
+            <div class="bg-yellow-500/10 border border-yellow-500 rounded-lg p-4 mb-6">
+                <p class="text-yellow-500 font-semibold mb-2">⚠️ Important:</p>
+                <ul class="text-gray-700 dark:text-slate-300 text-sm space-y-1 ml-5 list-disc">
+                    <li>This link is now <strong class="text-gray-900 dark:text-white">invalid forever</strong></li>
                     <li>The text has been deleted from our servers</li>
                     <li>Save the text now if you need it</li>
                 </ul>
             </div>
 
-            <a href="index.html" class="btn btn-primary">Share Another Secret</a>
+            <a href="index.html" class="btn-primary block">Share Another Secret</a>
         </section>
 
-        <section class="info-section">
-            <h3>About sdbx</h3>
-            <p>
+        <!-- Info Section -->
+        <section class="mt-12 text-center">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-3">About sdbx</h3>
+            <p class="text-gray-500 dark:text-slate-400 text-sm leading-relaxed max-w-2xl mx-auto">
                 sdbx uses end-to-end encryption to protect your files.
                 Your encryption key never leaves your browser and the server never has access to your unencrypted files.
             </p>
         </section>
     </main>
 
-    <footer>
-        <p>&copy; <span id="year"></span> sdbx - Built with privacy in mind</p>
-        <p>
-            <a href="about.html">About</a> |
-            <a href="https://github.com/antonaks/sdbx" target="_blank" rel="noopener noreferrer">Source Code</a>
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 dark:border-slate-800 py-8 text-center">
+        <p class="text-gray-500 dark:text-slate-400 text-sm mb-2">&copy; <span id="year"></span> sdbx - Built with privacy in mind</p>
+        <p class="text-sm">
+            <a href="about.html" class="text-blue-500 hover:text-blue-400">About</a>
+            <span class="text-gray-400 dark:text-slate-600 mx-2">|</span>
+            <a href="https://github.com/antonaks/sdbx" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-400">Source Code</a>
         </p>
     </footer>
 

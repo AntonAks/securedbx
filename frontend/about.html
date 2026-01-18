@@ -101,7 +101,8 @@
                     </div>
                     <p class="text-gray-500 dark:text-slate-400 text-sm leading-relaxed">
                         Each file can only be downloaded once, then it's automatically and
-                        permanently deleted from our servers.
+                        permanently deleted from our servers. Network failure protection provides
+                        a 10-minute retry window if your download is interrupted.
                     </p>
                 </div>
             </div>
@@ -114,7 +115,7 @@
                 <li><strong class="text-gray-900 dark:text-slate-100">End-to-End Encryption:</strong> AES-256-GCM with 256-bit keys generated in your browser</li>
                 <li><strong class="text-gray-900 dark:text-slate-100">HTTPS Only:</strong> All communication uses TLS 1.2+ encryption</li>
                 <li><strong class="text-gray-900 dark:text-slate-100">Bot Protection:</strong> Google reCAPTCHA v3 prevents automated abuse</li>
-                <li><strong class="text-gray-900 dark:text-slate-100">Atomic Operations:</strong> Database-level race condition prevention</li>
+                <li><strong class="text-gray-900 dark:text-slate-100">Two-Phase Download:</strong> Reserve-then-confirm system prevents race conditions and allows retry on network failure</li>
                 <li><strong class="text-gray-900 dark:text-slate-100">Origin Verification:</strong> CloudFront custom headers block direct API access</li>
                 <li><strong class="text-gray-900 dark:text-slate-100">Automatic Cleanup:</strong> Expired files are deleted hourly</li>
             </ul>
@@ -125,7 +126,7 @@
             <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Technology Stack</h2>
             <p class="text-gray-600 dark:text-slate-300 leading-relaxed mb-4">sdbx is built with modern, privacy-focused technologies:</p>
             <ul class="text-gray-600 dark:text-slate-300 space-y-2 ml-6 list-disc">
-                <li><strong class="text-gray-900 dark:text-slate-100">Frontend:</strong> Vanilla JavaScript, Web Crypto API</li>
+                <li><strong class="text-gray-900 dark:text-slate-100">Frontend:</strong> Vanilla JavaScript, Web Crypto API, Tailwind CSS, Web Workers for large files</li>
                 <li><strong class="text-gray-900 dark:text-slate-100">Backend:</strong> AWS Lambda (Python 3.12), API Gateway</li>
                 <li><strong class="text-gray-900 dark:text-slate-100">Storage:</strong> Amazon S3 (encrypted files), DynamoDB (metadata)</li>
                 <li><strong class="text-gray-900 dark:text-slate-100">CDN:</strong> Amazon CloudFront</li>
@@ -138,10 +139,10 @@
             <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Limitations</h2>
             <p class="text-gray-600 dark:text-slate-300 leading-relaxed mb-4">To ensure optimal performance and security, sdbx has the following limitations:</p>
             <ul class="text-gray-600 dark:text-slate-300 space-y-2 ml-6 list-disc">
-                <li>Maximum file size: 500 MB (0.5 GB)</li>
-                <li>Files expire after 1, 12, or 24 hours (your choice)</li>
-                <li>Each file can only be downloaded once</li>
-                <li>Desktop browsers recommended for best experience</li>
+                <li>Maximum file size: 500 MB</li>
+                <li>Files expire after max 24 hours</li>
+                <li>Each file can only be downloaded once (with 10-minute retry window for network failures)</li>
+                <li>Desktop browsers recommended (mobile support available)</li>
             </ul>
         </section>
 
@@ -159,7 +160,8 @@
             </ul>
             <p class="text-gray-600 dark:text-slate-300 leading-relaxed">
                 The only data we store is: encrypted file blobs (which we cannot decrypt),
-                file size, upload timestamp, and expiration time. That's it.
+                file size, upload timestamp, expiration time, download reservation status,
+                and IP address hash (SHA-256, for abuse prevention only, not linked to files). That's it.
             </p>
         </section>
 

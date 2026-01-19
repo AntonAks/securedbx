@@ -22,10 +22,6 @@ const elements = {
     progressSection: document.getElementById('progress-section'),
     progressFill: document.getElementById('progress-fill'),
     progressText: document.getElementById('progress-text'),
-    resultSection: document.getElementById('result-section'),
-    shareUrl: document.getElementById('share-url'),
-    copyBtn: document.getElementById('copy-btn'),
-    newUploadBtn: document.getElementById('new-upload-btn'),
 };
 
 // State
@@ -38,8 +34,6 @@ elements.dropZone.addEventListener('dragleave', handleDragLeave);
 elements.dropZone.addEventListener('drop', handleDrop);
 elements.fileInput.addEventListener('change', handleFileSelect);
 elements.uploadBtn.addEventListener('click', handleUpload);
-elements.copyBtn.addEventListener('click', handleCopy);
-elements.newUploadBtn.addEventListener('click', resetForm);
 
 /**
  * Handle drag over event
@@ -141,16 +135,17 @@ async function handleUpload() {
         updateProgress(60, 'Uploading encrypted file...');
         await uploadToS3(uploadData.upload_url, encryptedData);
 
-        // Generate share URL
-        updateProgress(90, 'Generating share link...');
+        // Generate share page URL and redirect
+        updateProgress(100, 'Upload complete! Redirecting...');
         const keyBase64 = await CryptoModule.keyToBase64(key);
-        // Encode filename in URL so it can be extracted on download page
+        // Encode filename in URL so it can be extracted on share/download page
         const encodedFileName = encodeURIComponent(selectedFile.name);
-        const shareUrl = `${window.location.origin}/download.html#${uploadData.file_id}#${keyBase64}#${encodedFileName}`;
+        const sharePageUrl = `/share.html#${uploadData.file_id}#${keyBase64}#${encodedFileName}`;
 
-        // Show result
-        updateProgress(100, 'Upload complete!');
-        showResult(shareUrl);
+        // Small delay to show completion, then redirect
+        setTimeout(() => {
+            window.location.href = sharePageUrl;
+        }, 500);
 
     } catch (error) {
         console.error('Upload error:', error);
@@ -238,31 +233,6 @@ function updateProgress(percent, text) {
 }
 
 /**
- * Show upload result
- */
-function showResult(shareUrl) {
-    elements.progressSection.style.display = 'none';
-    elements.resultSection.style.display = 'block';
-    elements.shareUrl.value = shareUrl;
-    elements.shareUrl.select();
-}
-
-/**
- * Handle copy to clipboard
- */
-async function handleCopy() {
-    const success = await Utils.copyToClipboard(elements.shareUrl.value);
-    if (success) {
-        elements.copyBtn.textContent = 'Copied!';
-        setTimeout(() => {
-            elements.copyBtn.textContent = 'Copy';
-        }, 2000);
-    } else {
-        Utils.showError('Failed to copy to clipboard');
-    }
-}
-
-/**
  * Reset form to initial state
  */
 function resetForm() {
@@ -271,6 +241,5 @@ function resetForm() {
     elements.fileInfo.style.display = 'none';
     elements.uploadBtn.disabled = true;
     elements.progressSection.style.display = 'none';
-    elements.resultSection.style.display = 'none';
     elements.progressFill.style.width = '0%';
 }

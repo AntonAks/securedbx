@@ -18,10 +18,6 @@
     const textProgressSection = document.getElementById('text-progress-section');
     const textProgressFill = document.getElementById('text-progress-fill');
     const textProgressText = document.getElementById('text-progress-text');
-    const textResultSection = document.getElementById('text-result-section');
-    const textShareUrl = document.getElementById('text-share-url');
-    const textCopyBtn = document.getElementById('text-copy-btn');
-    const newTextBtn = document.getElementById('new-text-btn');
 
     // Tab switching
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -42,12 +38,6 @@
 
         // Upload button
         textUploadBtn.addEventListener('click', handleTextUpload);
-
-        // Copy button
-        textCopyBtn.addEventListener('click', handleCopyUrl);
-
-        // New text button
-        newTextBtn.addEventListener('click', resetTextUpload);
     }
 
     /**
@@ -103,7 +93,7 @@
         const text = textInput.value.trim();
 
         if (!text) {
-            alert('Please enter some text to share');
+            Utils.showError('Please enter some text to share');
             return;
         }
 
@@ -155,21 +145,19 @@
             }
 
             const data = await response.json();
-            updateProgress(100, 'Complete!');
+            updateProgress(100, 'Complete! Redirecting...');
 
-            // Generate share URL with key (same format as files)
-            const shareUrl = `${window.location.origin}/download.html#${data.file_id}#${keyBase64}`;
+            // Generate share page URL (no filename for text secrets)
+            const sharePageUrl = `/share.html#${data.file_id}#${keyBase64}`;
 
-            // Show result
+            // Small delay to show completion, then redirect
             setTimeout(() => {
-                textProgressSection.style.display = 'none';
-                textShareUrl.value = shareUrl;
-                textResultSection.style.display = 'block';
+                window.location.href = sharePageUrl;
             }, 500);
 
         } catch (error) {
             console.error('Upload error:', error);
-            alert(`Upload failed: ${error.message}`);
+            Utils.showError(`Upload failed: ${error.message}`);
             resetTextUpload();
         }
     }
@@ -185,38 +173,14 @@
     }
 
     /**
-     * Handle copy URL to clipboard
-     * @returns {Promise<void>}
-     */
-    async function handleCopyUrl() {
-        try {
-            await navigator.clipboard.writeText(textShareUrl.value);
-
-            const originalText = textCopyBtn.textContent;
-            textCopyBtn.textContent = '✓ Copied!';
-            textCopyBtn.classList.add('btn-success');
-
-            setTimeout(() => {
-                textCopyBtn.textContent = originalText;
-                textCopyBtn.classList.remove('btn-success');
-            }, 2000);
-        } catch (error) {
-            // Fallback: select text
-            textShareUrl.select();
-            alert('Press Ctrl+C (or Cmd+C on Mac) to copy');
-        }
-    }
-
-    /**
      * Reset text upload form to initial state
-     * Clears input, hides progress and result sections
+     * Clears input and hides progress section
      */
     function resetTextUpload() {
         textInput.value = '';
         charCount.textContent = '0';
         textUploadBtn.disabled = true;
         textProgressSection.style.display = 'none';
-        textResultSection.style.display = 'none';
         textProgressFill.style.width = '0%';
         textProgressText.textContent = '';
     }

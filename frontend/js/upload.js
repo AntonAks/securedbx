@@ -1,5 +1,6 @@
 /**
  * Upload page functionality
+ * Supports single files and multi-file ZIP bundles
  */
 
 'use strict';
@@ -15,9 +16,11 @@ const CONFIG = {
 const elements = {
     dropZone: document.getElementById('drop-zone'),
     fileInput: document.getElementById('file-input'),
-    fileInfo: document.getElementById('file-info'),
-    fileName: document.getElementById('file-name'),
-    fileSize: document.getElementById('file-size'),
+    fileList: document.getElementById('file-list'),
+    fileItems: document.getElementById('file-items'),
+    fileCount: document.getElementById('file-count'),
+    totalSize: document.getElementById('total-size'),
+    clearFilesBtn: document.getElementById('clear-files-btn'),
     uploadBtn: document.getElementById('upload-btn'),
     progressSection: document.getElementById('progress-section'),
     progressFill: document.getElementById('progress-fill'),
@@ -25,7 +28,7 @@ const elements = {
 };
 
 // State
-let selectedFile = null;
+let selectedFiles = [];
 
 // Event listeners
 elements.dropZone.addEventListener('click', () => elements.fileInput.click());
@@ -34,6 +37,7 @@ elements.dropZone.addEventListener('dragleave', handleDragLeave);
 elements.dropZone.addEventListener('drop', handleDrop);
 elements.fileInput.addEventListener('change', handleFileSelect);
 elements.uploadBtn.addEventListener('click', handleUpload);
+elements.clearFilesBtn.addEventListener('click', clearFiles);
 
 /**
  * Handle drag over event
@@ -60,7 +64,7 @@ function handleDrop(e) {
 
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-        selectFile(files[0]);
+        addFiles(files);
     }
 }
 
@@ -70,27 +74,110 @@ function handleDrop(e) {
 function handleFileSelect(e) {
     const files = e.target.files;
     if (files.length > 0) {
-        selectFile(files[0]);
+        addFiles(files);
     }
 }
 
 /**
- * Select and validate file
+ * Add files to selection
+ * @param {FileList} newFiles
  */
-function selectFile(file) {
-    // Validate file size
-    if (!Utils.validateFileSize(file.size, CONFIG.MAX_FILE_SIZE)) {
-        Utils.showError(`File size exceeds maximum limit of ${Utils.formatFileSize(CONFIG.MAX_FILE_SIZE)}`);
+function addFiles(newFiles) {
+    const newFilesArray = Array.from(newFiles);
+
+    // Combine with existing files
+    const combinedFiles = [...selectedFiles, ...newFilesArray];
+
+    // Validate combined files
+    const validation = ZipBundle.validateFiles(combinedFiles);
+    if (!validation.valid) {
+        Utils.showError(validation.error);
         return;
     }
 
-    selectedFile = file;
+    // Update state
+    selectedFiles = combinedFiles;
+    updateFileListUI();
+}
 
-    // Update UI
-    elements.fileName.textContent = file.name;
-    elements.fileSize.textContent = Utils.formatFileSize(file.size);
-    elements.fileInfo.style.display = 'block';
+/**
+ * Update file list UI
+ */
+function updateFileListUI() {
+    if (selectedFiles.length === 0) {
+        elements.fileList.style.display = 'none';
+        elements.uploadBtn.disabled = true;
+        return;
+    }
+
+    // Show file list
+    elements.fileList.style.display = 'block';
     elements.uploadBtn.disabled = false;
+
+    // Update counts
+    elements.fileCount.textContent = selectedFiles.length;
+
+    // Calculate total size
+    const totalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+    elements.totalSize.textContent = Utils.formatFileSize(totalSize);
+
+    // Render file items
+    elements.fileItems.innerHTML = '';
+    selectedFiles.forEach((file, index) => {
+        const li = document.createElement('li');
+        li.className = 'flex justify-between items-center text-sm py-1 border-b border-gray-200 dark:border-slate-700 last:border-0';
+        li.innerHTML = `
+            <span class="text-gray-700 dark:text-slate-300 truncate mr-2" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <span class="text-gray-500 dark:text-slate-500">${Utils.formatFileSize(file.size)}</span>
+                <button type="button" class="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 p-1" data-remove-index="${index}" title="Remove file">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        `;
+        elements.fileItems.appendChild(li);
+    });
+
+    // Add event listeners to remove buttons
+    elements.fileItems.querySelectorAll('[data-remove-index]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.currentTarget.dataset.removeIndex, 10);
+            removeFile(index);
+        });
+    });
+}
+
+/**
+ * Escape HTML special characters
+ * @param {string} text
+ * @returns {string}
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Remove file at index
+ * @param {number} index
+ */
+function removeFile(index) {
+    if (index >= 0 && index < selectedFiles.length) {
+        selectedFiles.splice(index, 1);
+        updateFileListUI();
+    }
+}
+
+/**
+ * Clear all selected files
+ */
+function clearFiles() {
+    selectedFiles = [];
+    elements.fileInput.value = '';
+    updateFileListUI();
 }
 
 /**
@@ -105,31 +192,54 @@ function getSelectedTTL() {
  * Handle file upload
  */
 async function handleUpload() {
-    if (!selectedFile) return;
+    if (selectedFiles.length === 0) return;
 
     try {
         elements.uploadBtn.disabled = true;
         elements.progressSection.style.display = 'block';
 
+        let fileToUpload;
+        let uploadFileName;
+
+        if (selectedFiles.length === 1) {
+            // Single file: existing flow (no ZIP)
+            fileToUpload = selectedFiles[0];
+            uploadFileName = selectedFiles[0].name;
+            updateProgress(0, 'Preparing file...');
+        } else {
+            // Multiple files: create ZIP bundle
+            updateProgress(0, 'Creating ZIP bundle...');
+            const bundle = await ZipBundle.createBundle(
+                selectedFiles,
+                (percent, message) => {
+                    // Map bundle creation to 0-15% of overall progress
+                    updateProgress(percent * 0.15, message);
+                }
+            );
+            fileToUpload = bundle.blob;
+            uploadFileName = bundle.filename;
+        }
+
         // Generate encryption key
-        updateProgress(0, 'Generating encryption key...');
+        updateProgress(15, 'Generating encryption key...');
         const key = await CryptoModule.generateKey();
 
-        // Encrypt file
-        updateProgress(20, 'Encrypting file... 0%');
+        // Encrypt file/bundle
+        updateProgress(20, 'Encrypting... 0%');
         const encryptedData = await CryptoModule.encryptFile(
-            selectedFile,
+            fileToUpload,
             key,
             (progress) => {
                 const percent = 20 + (progress * 0.3);
-                updateProgress(percent, `Encrypting file... ${Math.round(progress)}%`);
+                updateProgress(percent, `Encrypting... ${Math.round(progress)}%`);
             }
         );
 
         // Initialize upload
         updateProgress(50, 'Initializing upload...');
         const ttl = getSelectedTTL();
-        const uploadData = await initializeUpload(selectedFile.size, selectedFile.name, ttl);
+        const fileSize = fileToUpload.size || fileToUpload.byteLength;
+        const uploadData = await initializeUpload(fileSize, uploadFileName, ttl);
 
         // Upload to S3
         updateProgress(60, 'Uploading encrypted file...');
@@ -138,8 +248,7 @@ async function handleUpload() {
         // Generate share page URL and redirect
         updateProgress(100, 'Upload complete! Redirecting...');
         const keyBase64 = await CryptoModule.keyToBase64(key);
-        // Encode filename in URL so it can be extracted on share/download page
-        const encodedFileName = encodeURIComponent(selectedFile.name);
+        const encodedFileName = encodeURIComponent(uploadFileName);
         const sharePageUrl = `/share.html#${uploadData.file_id}#${keyBase64}#${encodedFileName}`;
 
         // Small delay to show completion, then redirect
@@ -149,7 +258,7 @@ async function handleUpload() {
 
     } catch (error) {
         console.error('Upload error:', error);
-        Utils.showError('Upload failed. Please try again.');
+        Utils.showError(error.message || 'Upload failed. Please try again.');
         resetForm();
     }
 }
@@ -236,9 +345,9 @@ function updateProgress(percent, text) {
  * Reset form to initial state
  */
 function resetForm() {
-    selectedFile = null;
+    selectedFiles = [];
     elements.fileInput.value = '';
-    elements.fileInfo.style.display = 'none';
+    elements.fileList.style.display = 'none';
     elements.uploadBtn.disabled = true;
     elements.progressSection.style.display = 'none';
     elements.progressFill.style.width = '0%';

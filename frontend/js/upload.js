@@ -25,6 +25,11 @@ const elements = {
     progressSection: document.getElementById('progress-section'),
     progressFill: document.getElementById('progress-fill'),
     progressText: document.getElementById('progress-text'),
+    // Custom TTL elements
+    customTtlInput: document.getElementById('custom-ttl-input'),
+    customTtlValue: document.getElementById('custom-ttl-value'),
+    customTtlUnit: document.getElementById('custom-ttl-unit'),
+    ttlPreviewTime: document.getElementById('ttl-preview-time'),
 };
 
 // State
@@ -38,6 +43,87 @@ elements.dropZone.addEventListener('drop', handleDrop);
 elements.fileInput.addEventListener('change', handleFileSelect);
 elements.uploadBtn.addEventListener('click', handleUpload);
 elements.clearFilesBtn.addEventListener('click', clearFiles);
+
+// Custom TTL toggle
+document.querySelectorAll('input[name="ttl"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        handleTtlChange(e);
+        updateExpirationPreview();
+    });
+});
+
+// Custom TTL unit change - update value options and preview
+elements.customTtlUnit.addEventListener('change', () => {
+    updateTtlValueOptions(elements.customTtlValue, elements.customTtlUnit.value);
+    updateExpirationPreview();
+});
+
+// Custom TTL value change - update preview
+elements.customTtlValue.addEventListener('change', updateExpirationPreview);
+
+// Initialize value dropdown with hours options (default)
+updateTtlValueOptions(elements.customTtlValue, 'hours');
+
+// Initialize expiration preview
+updateExpirationPreview();
+
+/**
+ * Handle TTL radio change - show/hide custom input
+ */
+function handleTtlChange(e) {
+    if (e.target.value === 'custom') {
+        elements.customTtlInput.style.display = 'block';
+    } else {
+        elements.customTtlInput.style.display = 'none';
+    }
+}
+
+/**
+ * Update TTL value dropdown options based on selected unit
+ */
+function updateTtlValueOptions(selectElement, unit) {
+    const options = {
+        minutes: [5, 10, 20, 30, 40, 50],
+        hours: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 24],
+        days: Array.from({ length: 7 }, (_, i) => i + 1),
+    };
+
+    const values = options[unit] || options.hours;
+    selectElement.innerHTML = values.map(v => `<option value="${v}">${v}</option>`).join('');
+}
+
+/**
+ * Update expiration time preview based on selected TTL
+ */
+function updateExpirationPreview() {
+    const ttl = getSelectedTTL();
+    let minutes;
+
+    if (typeof ttl === 'number') {
+        minutes = ttl;
+    } else {
+        // Convert preset to minutes
+        const presetMinutes = { '1h': 60, '12h': 720, '24h': 1440 };
+        minutes = presetMinutes[ttl] || 60;
+    }
+
+    const expirationDate = new Date(Date.now() + minutes * 60 * 1000);
+    elements.ttlPreviewTime.textContent = formatExpirationDate(expirationDate);
+}
+
+/**
+ * Format expiration date for display
+ */
+function formatExpirationDate(date) {
+    const options = {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    };
+    return date.toLocaleString(undefined, options);
+}
 
 /**
  * Handle drag over event
@@ -182,10 +268,27 @@ function clearFiles() {
 
 /**
  * Get selected TTL value
+ * Returns preset string ("1h", "12h", "24h") or minutes (number) for custom
  */
 function getSelectedTTL() {
     const ttlRadio = document.querySelector('input[name="ttl"]:checked');
-    return ttlRadio ? ttlRadio.value : '1h';
+    if (!ttlRadio) return '1h';
+
+    if (ttlRadio.value === 'custom') {
+        const value = parseInt(elements.customTtlValue.value, 10);
+        const unit = elements.customTtlUnit.value;
+
+        switch (unit) {
+            case 'hours':
+                return value * 60;
+            case 'days':
+                return value * 60 * 24;
+            default: // minutes
+                return value;
+        }
+    }
+
+    return ttlRadio.value;
 }
 
 /**

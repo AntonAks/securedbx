@@ -24,6 +24,23 @@ BUCKET_NAME = os.environ.get("BUCKET_NAME")
 TABLE_NAME = os.environ.get("TABLE_NAME")
 
 
+def ttl_to_seconds(ttl) -> int:
+    """
+    Convert TTL value to seconds.
+
+    Args:
+        ttl: Either a preset string ("1h", "12h", "24h") or minutes (int/float)
+
+    Returns:
+        TTL in seconds
+    """
+    if isinstance(ttl, str) and ttl in TTL_TO_SECONDS:
+        return TTL_TO_SECONDS[ttl]
+
+    # Numeric TTL is in minutes, convert to seconds
+    return int(ttl) * 60
+
+
 @require_cloudfront_and_recaptcha
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
@@ -67,7 +84,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         file_id = str(uuid.uuid4())
 
         # Calculate expiration timestamp
-        ttl_seconds = TTL_TO_SECONDS[ttl]
+        ttl_seconds = ttl_to_seconds(ttl)
         expires_at = int(time.time()) + ttl_seconds
 
         # Hash IP address (privacy)

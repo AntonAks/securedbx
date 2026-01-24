@@ -18,6 +18,11 @@
     const textProgressSection = document.getElementById('text-progress-section');
     const textProgressFill = document.getElementById('text-progress-fill');
     const textProgressText = document.getElementById('text-progress-text');
+    // Custom TTL elements
+    const textCustomTtlInput = document.getElementById('text-custom-ttl-input');
+    const textCustomTtlValue = document.getElementById('text-custom-ttl-value');
+    const textCustomTtlUnit = document.getElementById('text-custom-ttl-unit');
+    const textTtlPreviewTime = document.getElementById('text-ttl-preview-time');
 
     // Tab switching
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -38,6 +43,91 @@
 
         // Upload button
         textUploadBtn.addEventListener('click', handleTextUpload);
+
+        // Custom TTL toggle for text tab
+        document.querySelectorAll('input[name="text-ttl"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                handleTextTtlChange(e);
+                updateTextExpirationPreview();
+            });
+        });
+
+        // Custom TTL unit change - update value options and preview
+        textCustomTtlUnit.addEventListener('change', () => {
+            updateTextTtlValueOptions(textCustomTtlUnit.value);
+            updateTextExpirationPreview();
+        });
+
+        // Custom TTL value change - update preview
+        textCustomTtlValue.addEventListener('change', updateTextExpirationPreview);
+
+        // Initialize value dropdown with hours options (default)
+        updateTextTtlValueOptions('hours');
+
+        // Initialize expiration preview
+        updateTextExpirationPreview();
+    }
+
+    /**
+     * Handle TTL radio change - show/hide custom input
+     * @param {Event} e - Change event
+     */
+    function handleTextTtlChange(e) {
+        if (e.target.value === 'custom') {
+            textCustomTtlInput.style.display = 'block';
+        } else {
+            textCustomTtlInput.style.display = 'none';
+        }
+    }
+
+    /**
+     * Update TTL value dropdown options based on selected unit
+     * @param {string} unit - Selected unit (minutes, hours, days)
+     */
+    function updateTextTtlValueOptions(unit) {
+        const options = {
+            minutes: [5, 10, 20, 30, 40, 50],
+            hours: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 24],
+            days: Array.from({ length: 7 }, (_, i) => i + 1),
+        };
+
+        const values = options[unit] || options.hours;
+        textCustomTtlValue.innerHTML = values.map(v => `<option value="${v}">${v}</option>`).join('');
+    }
+
+    /**
+     * Update expiration time preview based on selected TTL
+     */
+    function updateTextExpirationPreview() {
+        const ttl = getTextTTL();
+        let minutes;
+
+        if (typeof ttl === 'number') {
+            minutes = ttl;
+        } else {
+            // Convert preset to minutes
+            const presetMinutes = { '1h': 60, '12h': 720, '24h': 1440 };
+            minutes = presetMinutes[ttl] || 60;
+        }
+
+        const expirationDate = new Date(Date.now() + minutes * 60 * 1000);
+        textTtlPreviewTime.textContent = formatTextExpirationDate(expirationDate);
+    }
+
+    /**
+     * Format expiration date for display
+     * @param {Date} date - Expiration date
+     * @returns {string} Formatted date string
+     */
+    function formatTextExpirationDate(date) {
+        const options = {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        };
+        return date.toLocaleString(undefined, options);
     }
 
     /**
@@ -77,11 +167,28 @@
 
     /**
      * Get selected TTL value for text secret
-     * @returns {string} TTL value: "1h", "12h", or "24h"
+     * Returns preset string ("1h", "12h", "24h") or minutes (number) for custom
+     * @returns {string|number} TTL value
      */
     function getTextTTL() {
         const selected = document.querySelector('input[name="text-ttl"]:checked');
-        return selected ? selected.value : '1h';
+        if (!selected) return '1h';
+
+        if (selected.value === 'custom') {
+            const value = parseInt(textCustomTtlValue.value, 10);
+            const unit = textCustomTtlUnit.value;
+
+            switch (unit) {
+                case 'hours':
+                    return value * 60;
+                case 'days':
+                    return value * 60 * 24;
+                default: // minutes
+                    return value;
+            }
+        }
+
+        return selected.value;
     }
 
     /**

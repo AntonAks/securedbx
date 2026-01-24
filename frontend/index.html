@@ -96,7 +96,7 @@
                 <!-- TTL Selector -->
                 <div class="mb-6">
                     <label class="block text-gray-700 dark:text-slate-300 font-medium mb-3">Delete after:</label>
-                    <div class="flex gap-4">
+                    <div class="flex flex-wrap gap-4">
                         <label class="flex items-center cursor-pointer">
                             <input type="radio" name="ttl" value="1h" checked class="mr-2 text-blue-600 focus:ring-blue-500">
                             <span class="text-gray-700 dark:text-slate-300">1 hour</span>
@@ -109,7 +109,26 @@
                             <input type="radio" name="ttl" value="24h" class="mr-2 text-blue-600 focus:ring-blue-500">
                             <span class="text-gray-700 dark:text-slate-300">24 hours</span>
                         </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="ttl" value="custom" class="mr-2 text-blue-600 focus:ring-blue-500">
+                            <span class="text-gray-700 dark:text-slate-300">Custom</span>
+                        </label>
                     </div>
+                    <!-- Custom TTL Input -->
+                    <div id="custom-ttl-input" class="mt-3 p-3 bg-gray-100 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700" style="display: none;">
+                        <div class="flex items-center gap-2">
+                            <select id="custom-ttl-value" class="px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded text-gray-900 dark:text-slate-200 focus:outline-none focus:border-blue-500">
+                                <option value="1">1</option>
+                            </select>
+                            <select id="custom-ttl-unit" class="px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded text-gray-900 dark:text-slate-200 focus:outline-none focus:border-blue-500">
+                                <option value="minutes">minutes</option>
+                                <option value="hours" selected>hours</option>
+                                <option value="days">days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Expiration Preview -->
+                    <p id="ttl-preview" class="text-gray-500 dark:text-slate-400 text-sm mt-2">Expires: <span id="ttl-preview-time"></span></p>
                 </div>
 
                 <!-- Upload Button -->
@@ -140,7 +159,7 @@
                 <!-- TTL Selector -->
                 <div class="mb-6">
                     <label class="block text-gray-700 dark:text-slate-300 font-medium mb-3">Delete after:</label>
-                    <div class="flex gap-4">
+                    <div class="flex flex-wrap gap-4">
                         <label class="flex items-center cursor-pointer">
                             <input type="radio" name="text-ttl" value="1h" checked class="mr-2 text-blue-600 focus:ring-blue-500">
                             <span class="text-gray-700 dark:text-slate-300">1 hour</span>
@@ -153,7 +172,26 @@
                             <input type="radio" name="text-ttl" value="24h" class="mr-2 text-blue-600 focus:ring-blue-500">
                             <span class="text-gray-700 dark:text-slate-300">24 hours</span>
                         </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="text-ttl" value="custom" class="mr-2 text-blue-600 focus:ring-blue-500">
+                            <span class="text-gray-700 dark:text-slate-300">Custom</span>
+                        </label>
                     </div>
+                    <!-- Custom TTL Input -->
+                    <div id="text-custom-ttl-input" class="mt-3 p-3 bg-gray-100 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700" style="display: none;">
+                        <div class="flex items-center gap-2">
+                            <select id="text-custom-ttl-value" class="px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded text-gray-900 dark:text-slate-200 focus:outline-none focus:border-blue-500">
+                                <option value="1">1</option>
+                            </select>
+                            <select id="text-custom-ttl-unit" class="px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded text-gray-900 dark:text-slate-200 focus:outline-none focus:border-blue-500">
+                                <option value="minutes">minutes</option>
+                                <option value="hours" selected>hours</option>
+                                <option value="days">days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Expiration Preview -->
+                    <p id="text-ttl-preview" class="text-gray-500 dark:text-slate-400 text-sm mt-2">Expires: <span id="text-ttl-preview-time"></span></p>
                 </div>
 
                 <!-- Upload Button -->

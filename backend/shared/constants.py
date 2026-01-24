@@ -15,6 +15,10 @@ TTL_TO_SECONDS: Final[dict[str, int]] = {
 
 ALLOWED_TTL_VALUES: Final[tuple[str, ...]] = ("1h", "12h", "24h")
 
+# Custom TTL limits (in minutes)
+MIN_CUSTOM_TTL_MINUTES: Final[int] = 5        # 5 minutes
+MAX_CUSTOM_TTL_MINUTES: Final[int] = 10080    # 7 days (7 * 24 * 60)
+
 # Presigned URL expiry times (in seconds)
 UPLOAD_URL_EXPIRY_SECONDS: Final[int] = 900  # 15 minutes
 DOWNLOAD_URL_EXPIRY_SECONDS: Final[int] = 300  # 5 minutes

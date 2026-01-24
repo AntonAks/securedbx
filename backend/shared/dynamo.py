@@ -317,13 +317,13 @@ def increment_report_count(table_name: str, file_id: str) -> int:
     try:
         response = table.update_item(
             Key={"file_id": file_id},
-            UpdateExpression="SET report_count = report_count + :inc",
-            ExpressionAttributeValues={":inc": 1},
+            UpdateExpression="SET report_count = if_not_exists(report_count, :zero) + :inc",
+            ExpressionAttributeValues={":inc": 1, ":zero": 0},
             ReturnValues="UPDATED_NEW",
         )
         new_count = response["Attributes"]["report_count"]
         logger.info(f"Incremented report count for {file_id}: {new_count}")
-        return new_count
+        return int(new_count)
 
     except ClientError as e:
         logger.error(f"Error incrementing report count for {file_id}: {e}")

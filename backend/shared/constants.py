@@ -29,6 +29,11 @@ DOWNLOAD_RESERVATION_TIMEOUT: Final[int] = 600  # 10 minutes
 # Abuse reporting
 AUTO_DELETE_THRESHOLD: Final[int] = 3  # Number of reports before auto-delete
 
+# Access modes
+ACCESS_MODE_ONE_TIME: Final[str] = "one_time"
+ACCESS_MODE_MULTI: Final[str] = "multi"
+ALLOWED_ACCESS_MODES: Final[tuple[str, ...]] = (ACCESS_MODE_ONE_TIME, ACCESS_MODE_MULTI)
+
 # HTTP Status Codes (for documentation and consistency)
 HTTP_OK: Final[int] = 200
 HTTP_BAD_REQUEST: Final[int] = 400

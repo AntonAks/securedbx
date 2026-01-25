@@ -47,14 +47,32 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         if record.get("expires_at", 0) <= current_time:
             return error_response("File expired", 410)
 
-        # Return metadata
-        return success_response({
+        # Build metadata response
+        access_mode = record.get("access_mode", "one_time")
+
+        # For multi-access (vault), always available until expired
+        # For one-time, check downloaded flag
+        if access_mode == "multi":
+            available = True
+        else:
+            available = not record.get("downloaded", False)
+
+        response_data = {
             "file_id": record["file_id"],
             "content_type": record.get("content_type", "file"),
             "file_size": record["file_size"],
-            "available": not record.get("downloaded", False),
+            "available": available,
             "expires_at": record["expires_at"],
-        })
+            "access_mode": access_mode,
+        }
+
+        # Include vault-specific fields for multi-access mode
+        if access_mode == "multi":
+            response_data["salt"] = record.get("salt")
+            response_data["encrypted_key"] = record.get("encrypted_key")
+            response_data["download_count"] = record.get("download_count", 0)
+
+        return success_response(response_data)
 
     except ValidationError as e:
         logger.warning(f"Validation error: {e}")

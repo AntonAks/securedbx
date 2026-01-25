@@ -7,14 +7,25 @@ import time
 import uuid
 from typing import Any
 
-from shared.constants import TTL_TO_SECONDS, UPLOAD_URL_EXPIRY_SECONDS
+from shared.constants import (
+    ACCESS_MODE_MULTI,
+    ACCESS_MODE_ONE_TIME,
+    TTL_TO_SECONDS,
+    UPLOAD_URL_EXPIRY_SECONDS,
+)
 from shared.dynamo import create_file_record
 from shared.exceptions import ValidationError
 from shared.request_helpers import get_source_ip, parse_json_body
 from shared.response import error_response, success_response
 from shared.s3 import generate_upload_url
 from shared.security import require_cloudfront_and_recaptcha
-from shared.validation import validate_file_size, validate_ttl
+from shared.validation import (
+    validate_access_mode,
+    validate_encrypted_key,
+    validate_file_size,
+    validate_salt,
+    validate_ttl,
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -64,6 +75,28 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         "recaptcha_token": "token"
     }
 
+    Expected request body (vault file):
+    {
+        "content_type": "file",
+        "file_size": 1024,
+        "ttl": "1h",
+        "access_mode": "multi",
+        "salt": "base64-salt",
+        "encrypted_key": "base64-encrypted-key",
+        "recaptcha_token": "token"
+    }
+
+    Expected request body (vault text):
+    {
+        "content_type": "text",
+        "encrypted_text": "base64-encrypted-text",
+        "ttl": "1h",
+        "access_mode": "multi",
+        "salt": "base64-salt",
+        "encrypted_key": "base64-encrypted-key",
+        "recaptcha_token": "token"
+    }
+
     Returns:
     {
         "file_id": "uuid",
@@ -76,9 +109,20 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         body = parse_json_body(event)
         content_type = body.get("content_type", "file")
         ttl = body.get("ttl")
+        access_mode = body.get("access_mode", ACCESS_MODE_ONE_TIME)
 
-        # Validate TTL
+        # Validate TTL and access mode
         validate_ttl(ttl)
+        validate_access_mode(access_mode)
+
+        # Validate vault-specific fields if multi-access mode
+        salt = None
+        encrypted_key = None
+        if access_mode == ACCESS_MODE_MULTI:
+            salt = body.get("salt")
+            encrypted_key = body.get("encrypted_key")
+            validate_salt(salt)
+            validate_encrypted_key(encrypted_key)
 
         # Generate unique ID
         file_id = str(uuid.uuid4())
@@ -99,8 +143,10 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 raise ValidationError("encrypted_text is required for text secrets")
 
             # Validate text length (base64 encoded)
-            if len(encrypted_text) > 10000:  # ~7KB base64 = ~5KB encrypted ~= 1000+ chars
-                raise ValidationError("Text secret too large (max 1000 characters)")
+            # For vault, allow larger text (10000 chars)
+            max_text_size = 100000 if access_mode == ACCESS_MODE_MULTI else 10000
+            if len(encrypted_text) > max_text_size:
+                raise ValidationError("Text secret too large")
 
             # Create DynamoDB record with encrypted text
             create_file_record(
@@ -111,9 +157,12 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 ip_hash=ip_hash,
                 content_type="text",
                 encrypted_text=encrypted_text,
+                access_mode=access_mode,
+                salt=salt,
+                encrypted_key=encrypted_key,
             )
 
-            logger.info(f"Text secret created: file_id={file_id}, size={len(encrypted_text)}, ttl={ttl}")
+            logger.info(f"Text secret created: file_id={file_id}, size={len(encrypted_text)}, ttl={ttl}, access_mode={access_mode}")
 
             return success_response({
                 "file_id": file_id,
@@ -136,6 +185,9 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 ip_hash=ip_hash,
                 content_type="file",
                 s3_key=s3_key,
+                access_mode=access_mode,
+                salt=salt,
+                encrypted_key=encrypted_key,
             )
 
             # Generate presigned upload URL
@@ -145,7 +197,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 expires_in=UPLOAD_URL_EXPIRY_SECONDS,
             )
 
-            logger.info(f"File upload initialized: file_id={file_id}, size={file_size}, ttl={ttl}")
+            logger.info(f"File upload initialized: file_id={file_id}, size={file_size}, ttl={ttl}, access_mode={access_mode}")
 
             return success_response({
                 "file_id": file_id,

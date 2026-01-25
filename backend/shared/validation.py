@@ -4,6 +4,7 @@ import re
 from typing import Any
 
 from .constants import (
+    ALLOWED_ACCESS_MODES,
     ALLOWED_TTL_VALUES,
     MAX_CUSTOM_TTL_MINUTES,
     MAX_FILE_SIZE_BYTES,
@@ -88,3 +89,60 @@ def validate_ttl(ttl: Any) -> None:
     raise ValidationError(
         f"TTL must be one of {ALLOWED_TTL_VALUES} or a number of minutes ({MIN_CUSTOM_TTL_MINUTES}-{MAX_CUSTOM_TTL_MINUTES})"
     )
+
+
+def validate_access_mode(access_mode: Any) -> None:
+    """
+    Validate access mode.
+
+    Args:
+        access_mode: Access mode value ("one_time" or "multi")
+
+    Raises:
+        ValidationError: If access mode is invalid
+    """
+    if access_mode not in ALLOWED_ACCESS_MODES:
+        raise ValidationError(f"Access mode must be one of {ALLOWED_ACCESS_MODES}")
+
+
+def validate_salt(salt: Any) -> None:
+    """
+    Validate salt for password-protected vault.
+
+    Args:
+        salt: Base64-encoded salt string
+
+    Raises:
+        ValidationError: If salt is invalid
+    """
+    if not isinstance(salt, str):
+        raise ValidationError("Salt must be a string")
+
+    if not salt:
+        raise ValidationError("Salt is required for vault access")
+
+    # Base64 encoded 16-byte salt should be ~24 chars, allow some margin
+    if len(salt) > 50:
+        raise ValidationError("Invalid salt format")
+
+
+def validate_encrypted_key(encrypted_key: Any) -> None:
+    """
+    Validate encrypted key for password-protected vault.
+
+    Args:
+        encrypted_key: Base64-encoded encrypted key string
+
+    Raises:
+        ValidationError: If encrypted key is invalid
+    """
+    if not isinstance(encrypted_key, str):
+        raise ValidationError("Encrypted key must be a string")
+
+    if not encrypted_key:
+        raise ValidationError("Encrypted key is required for vault access")
+
+    # Base64 encoded IV (12 bytes) + encrypted key (32 bytes) + auth tag (16 bytes)
+    # Should be ~80 chars, allow margin for variations
+    if len(encrypted_key) > 200:
+        raise ValidationError("Invalid encrypted key format")

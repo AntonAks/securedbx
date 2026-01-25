@@ -4,8 +4,8 @@ import logging
 import os
 from typing import Any
 
-from shared.constants import DOWNLOAD_URL_EXPIRY_SECONDS
-from shared.dynamo import reserve_download
+from shared.constants import ACCESS_MODE_MULTI, DOWNLOAD_URL_EXPIRY_SECONDS
+from shared.dynamo import get_file_record, increment_vault_download, reserve_download
 from shared.exceptions import (
     FileAlreadyDownloadedError,
     FileExpiredError,
@@ -37,8 +37,14 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     For files: Returns presigned S3 download URL
     For text: Returns encrypted text directly
 
-    This uses atomic DynamoDB conditional update to reserve the download.
-    The frontend must call /confirm endpoint after successful download.
+    For one-time access:
+    - Uses atomic DynamoDB conditional update to reserve the download.
+    - The frontend must call /confirm endpoint after successful download.
+
+    For multi-access (vault):
+    - Increments download count (no reservation needed)
+    - No confirmation required
+    - Can be downloaded unlimited times until TTL expires
     """
     try:
         # Extract file ID from path
@@ -47,20 +53,37 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         # Validate input
         validate_file_id(file_id)
 
-        # Atomically reserve for download
-        record = reserve_download(TABLE_NAME, file_id)
+        # First, get the record to check access mode
+        initial_record = get_file_record(TABLE_NAME, file_id)
+        if not initial_record:
+            raise FileNotFoundError("File not found")
+
+        access_mode = initial_record.get("access_mode", "one_time")
+
+        # Handle based on access mode
+        if access_mode == ACCESS_MODE_MULTI:
+            # Vault (multi-access) - just increment download count
+            record = increment_vault_download(TABLE_NAME, file_id)
+        else:
+            # One-time access - atomically reserve for download
+            record = reserve_download(TABLE_NAME, file_id)
 
         # Check content type and return appropriate response
         content_type = record.get("content_type", "file")
 
         if content_type == "text":
             # Text secret - return encrypted text directly
-            logger.info(f"Text secret download reserved: file_id={file_id}, score={event.get('_recaptcha_score', 'N/A')}")
+            log_suffix = f"score={event.get('_recaptcha_score', 'N/A')}"
+            if access_mode == ACCESS_MODE_MULTI:
+                logger.info(f"Vault text download #{record.get('download_count', 1)}: file_id={file_id}, {log_suffix}")
+            else:
+                logger.info(f"Text secret download reserved: file_id={file_id}, {log_suffix}")
 
             return success_response({
                 "content_type": "text",
                 "encrypted_text": record["encrypted_text"],
                 "file_size": record["file_size"],
+                "access_mode": access_mode,
             })
 
         else:
@@ -71,12 +94,17 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 expires_in=DOWNLOAD_URL_EXPIRY_SECONDS,
             )
 
-            logger.info(f"File download reserved: file_id={file_id}, score={event.get('_recaptcha_score', 'N/A')}")
+            log_suffix = f"score={event.get('_recaptcha_score', 'N/A')}"
+            if access_mode == ACCESS_MODE_MULTI:
+                logger.info(f"Vault file download #{record.get('download_count', 1)}: file_id={file_id}, {log_suffix}")
+            else:
+                logger.info(f"File download reserved: file_id={file_id}, {log_suffix}")
 
             return success_response({
                 "content_type": "file",
                 "download_url": download_url,
                 "file_size": record["file_size"],
+                "access_mode": access_mode,
             })
 
     except ValidationError as e:

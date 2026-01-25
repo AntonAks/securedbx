@@ -8,7 +8,7 @@ from typing import Any, Optional
 import boto3
 from botocore.exceptions import ClientError
 
-from .constants import DOWNLOAD_RESERVATION_TIMEOUT
+from .constants import ACCESS_MODE_MULTI, ACCESS_MODE_ONE_TIME, DOWNLOAD_RESERVATION_TIMEOUT
 from .exceptions import (
     FileAlreadyDownloadedError,
     FileExpiredError,
@@ -36,6 +36,9 @@ def create_file_record(
     content_type: str = "file",
     s3_key: Optional[str] = None,
     encrypted_text: Optional[str] = None,
+    access_mode: str = ACCESS_MODE_ONE_TIME,
+    salt: Optional[str] = None,
+    encrypted_key: Optional[str] = None,
 ) -> dict[str, Any]:
     """
     Create a new file or text secret record in DynamoDB.
@@ -49,6 +52,9 @@ def create_file_record(
         content_type: "file" or "text" (default: "file")
         s3_key: S3 object key (required for files)
         encrypted_text: Base64 encrypted text (required for text secrets)
+        access_mode: "one_time" (default) or "multi" for vault
+        salt: Base64 salt for PBKDF2 (required for multi access)
+        encrypted_key: Base64 encrypted AES key (required for multi access)
 
     Returns:
         Created record
@@ -64,6 +70,7 @@ def create_file_record(
         "downloaded": False,
         "ip_hash": ip_hash,
         "report_count": 0,
+        "access_mode": access_mode,
     }
 
     # Add type-specific fields
@@ -76,8 +83,18 @@ def create_file_record(
             raise ValueError("encrypted_text required for text content_type")
         record["encrypted_text"] = encrypted_text
 
+    # Add vault-specific fields for multi-access mode
+    if access_mode == ACCESS_MODE_MULTI:
+        if not salt:
+            raise ValueError("salt required for multi access mode")
+        if not encrypted_key:
+            raise ValueError("encrypted_key required for multi access mode")
+        record["salt"] = salt
+        record["encrypted_key"] = encrypted_key
+        record["download_count"] = 0
+
     table.put_item(Item=record)
-    logger.info(f"Created {content_type} record: {file_id}")
+    logger.info(f"Created {content_type} record ({access_mode}): {file_id}")
 
     return record
 
@@ -298,6 +315,77 @@ def confirm_download(table_name: str, file_id: str) -> dict[str, Any]:
             raise FileNotFoundError("No active download reservation found")
 
         logger.error(f"Error confirming download for {file_id}: {e}")
+        raise
+
+
+def increment_vault_download(table_name: str, file_id: str) -> dict[str, Any]:
+    """
+    Increment download count for a vault (multi-access) record.
+
+    Unlike one-time downloads, this does NOT mark the file as downloaded,
+    allowing unlimited downloads until the TTL expires.
+
+    Args:
+        table_name: DynamoDB table name
+        file_id: File ID
+
+    Returns:
+        Updated file record with new download_count
+
+    Raises:
+        FileExpiredError: If file has expired
+        FileNotFoundError: If file doesn't exist
+    """
+    table = get_table(table_name)
+    current_time = int(time.time())
+
+    try:
+        response = table.update_item(
+            Key={"file_id": file_id},
+            UpdateExpression="SET download_count = if_not_exists(download_count, :zero) + :inc, last_downloaded_at = :now",
+            ConditionExpression="expires_at > :current AND access_mode = :multi",
+            ExpressionAttributeValues={
+                ":inc": 1,
+                ":zero": 0,
+                ":now": datetime.utcnow().isoformat(),
+                ":current": current_time,
+                ":multi": ACCESS_MODE_MULTI,
+            },
+            ReturnValues="ALL_NEW",
+        )
+        record = response["Attributes"]
+        logger.info(f"Vault download #{record.get('download_count', 1)} for: {file_id}")
+
+        # Increment global download counter
+        try:
+            increment_download_counter(table_name, file_size=record.get("file_size", 0))
+        except Exception as e:
+            # Don't fail if counter increment fails
+            logger.warning(f"Failed to increment download counter: {e}")
+
+        return record
+
+    except ClientError as e:
+        error_code = e.response["Error"]["Code"]
+
+        if error_code == "ConditionalCheckFailedException":
+            # Check why it failed
+            record = get_file_record(table_name, file_id)
+
+            if not record:
+                raise FileNotFoundError("File not found")
+
+            if record.get("expires_at", 0) <= current_time:
+                raise FileExpiredError("File has expired")
+
+            if record.get("access_mode") != ACCESS_MODE_MULTI:
+                # Should not happen - wrong function called
+                logger.error(f"increment_vault_download called for non-vault record: {file_id}")
+                raise ValueError("This is not a vault record")
+
+            raise
+
+        logger.error(f"Error incrementing vault download for {file_id}: {e}")
         raise
 
 

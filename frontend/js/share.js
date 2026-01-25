@@ -37,37 +37,77 @@
      * Initialize share page
      */
     function init() {
-        const fileId = Utils.getFileIdFromUrl();
-        const key = Utils.getKeyFromFragment();
-        const fileName = Utils.getFileNameFromFragment();
+        // Parse URL fragment: #fileId#key#filename or #fileId#salt#filename#vault
+        const fragment = window.location.hash.slice(1);
+        const parts = fragment.split('#');
 
-        if (!fileId || !key) {
-            showError('Invalid share link. File ID or encryption key is missing.');
-            return;
+        const fileId = parts[0];
+        const isVault = parts.length >= 4 && parts[parts.length - 1] === 'vault';
+
+        if (isVault) {
+            // Vault URL: #file_id#salt#filename#vault
+            const salt = parts[1];
+            const fileName = parts[2] ? decodeURIComponent(parts[2]) : null;
+
+            if (!fileId || !salt) {
+                showError('Invalid vault link. File ID or salt is missing.');
+                return;
+            }
+
+            // Build vault download URL
+            const downloadUrl = buildVaultDownloadUrl(fileId, salt, fileName);
+
+            // Update labels for vault
+            updateVaultLabels(fileName);
+
+            // Generate QR code
+            generateQRCode(downloadUrl);
+
+            // Set share URL
+            elements.shareUrl.value = downloadUrl;
+
+            // Setup event listeners
+            setupEventListeners(downloadUrl, fileName);
+
+            // Fetch metadata and start countdown
+            fetchMetadataAndStartCountdown(fileId);
+
+            // Show share section
+            elements.loadingSection.style.display = 'none';
+            elements.shareSection.style.display = 'block';
+        } else {
+            // One-time URL: #file_id#key#filename
+            const key = parts[1];
+            const fileName = parts[2] ? decodeURIComponent(parts[2]) : null;
+
+            if (!fileId || !key) {
+                showError('Invalid share link. File ID or encryption key is missing.');
+                return;
+            }
+
+            // Build download URL
+            const downloadUrl = buildDownloadUrl(fileId, key, fileName);
+
+            // Determine if this is a text secret (no filename) or file
+            const isTextSecret = !fileName;
+            updateContentTypeLabels(isTextSecret);
+
+            // Generate QR code
+            generateQRCode(downloadUrl);
+
+            // Set share URL
+            elements.shareUrl.value = downloadUrl;
+
+            // Setup event listeners
+            setupEventListeners(downloadUrl, fileName);
+
+            // Fetch metadata and start countdown
+            fetchMetadataAndStartCountdown(fileId);
+
+            // Show share section
+            elements.loadingSection.style.display = 'none';
+            elements.shareSection.style.display = 'block';
         }
-
-        // Build download URL
-        const downloadUrl = buildDownloadUrl(fileId, key, fileName);
-
-        // Determine if this is a text secret (no filename) or file
-        const isTextSecret = !fileName;
-        updateContentTypeLabels(isTextSecret);
-
-        // Generate QR code
-        generateQRCode(downloadUrl);
-
-        // Set share URL
-        elements.shareUrl.value = downloadUrl;
-
-        // Setup event listeners
-        setupEventListeners(downloadUrl, fileName);
-
-        // Fetch metadata and start countdown
-        fetchMetadataAndStartCountdown(fileId);
-
-        // Show share section
-        elements.loadingSection.style.display = 'none';
-        elements.shareSection.style.display = 'block';
     }
 
     /**
@@ -92,6 +132,28 @@
     }
 
     /**
+     * Build vault download URL from components
+     * @param {string} fileId - File ID
+     * @param {string} salt - Base64 encoded salt for PBKDF2
+     * @param {string|null} fileName - Original filename (null for text)
+     * @returns {string} Full vault download URL
+     */
+    function buildVaultDownloadUrl(fileId, salt, fileName) {
+        let url = `${window.location.origin}/download.html#${fileId}#${salt}`;
+        if (fileName) {
+            url += `#${encodeURIComponent(fileName)}`;
+        }
+        url += '#vault';
+
+        // Warn if URL is very long
+        if (url.length > CONFIG.MAX_QR_URL_LENGTH) {
+            console.warn(`Vault URL is ${url.length} chars (>${CONFIG.MAX_QR_URL_LENGTH}), QR code may be hard to scan`);
+        }
+
+        return url;
+    }
+
+    /**
      * Update labels based on content type (file vs text)
      * @param {boolean} isTextSecret - Whether this is a text secret
      */
@@ -103,6 +165,40 @@
             elements.contentTypeLabel.textContent = 'Your file has been encrypted and uploaded.';
             elements.deleteWarning.textContent = 'File deleted after download or expiry';
         }
+    }
+
+    /**
+     * Update labels for vault (password-protected, multi-access)
+     * @param {string|null} fileName - Filename if file, null if text
+     */
+    function updateVaultLabels(fileName) {
+        const isText = !fileName;
+
+        if (isText) {
+            elements.contentTypeLabel.innerHTML = `
+                <span class="inline-flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    Your text has been stored in the vault.
+                </span>
+            `;
+        } else {
+            elements.contentTypeLabel.innerHTML = `
+                <span class="inline-flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    Your file has been stored in the vault.
+                </span>
+            `;
+        }
+
+        // Update delete warning with vault-specific messaging
+        elements.deleteWarning.innerHTML = `
+            <span class="text-blue-600 dark:text-blue-400 font-medium">Password-protected</span>
+            &bull; Can be accessed multiple times until expiry
+        `;
     }
 
     /**

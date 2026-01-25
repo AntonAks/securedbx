@@ -245,12 +245,9 @@ resource "aws_cloudfront_distribution" "main" {
     error_caching_min_ttl = 300
   }
 
-  custom_error_response {
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 300
-  }
+  # Note: Removed 403 custom_error_response - it was catching API Gateway 403 errors
+  # and replacing them with index.html. S3 403 errors for non-existent paths should
+  # not occur since we have a proper default_root_object and 404 handling.
 
   # Restrictions
   restrictions {

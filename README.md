@@ -19,7 +19,7 @@
 ### 🚫 No Tracking, No Accounts
 - **No registration** — No accounts, no email, no cookies
 - **Privacy-first** — No analytics, no IP logging, no user tracking
-- **Self-destructing** — Content expires after 1, 12, or 24 hours (your choice)
+- **Self-destructing** — Content expires after 1-24 hours or custom time (5 min - 7 days)
 
 ### 🎨 Modern Interface
 - **Clean design** — Built with Tailwind CSS for a modern, professional look
@@ -48,7 +48,7 @@
 
 ### Uploading Files or Secrets
 
-1. Select a file or enter text and choose expiration time (1h, 12h, or 24h)
+1. Select a file or enter text and choose expiration time (1h, 12h, 24h, or custom 5min-7days)
 2. Your browser generates a random encryption key
 3. Content is encrypted locally using AES-256-GCM
 4. Encrypted data is uploaded to secure storage (server never sees the key or original filename)
@@ -123,7 +123,7 @@
 ## Limitations
 
 - Maximum file size: 500 MB
-- Files expire after max 24 hours
+- Files expire after max 7 days (custom) or 24 hours (preset)
 - Each file can only be downloaded once (with 10-minute retry window for network failures)
 - Desktop browsers recommended (mobile support available)
 
@@ -342,8 +342,8 @@ The only data we store is:
 Planned features for sdbx:
 
 - ✅ **Multiple Files / Zip Bundle** - Upload multiple files as encrypted bundle
+- ✅ **Custom Expiration Times** - Precise expiration (5 min - 7 days) with real-time preview
 - 📋 **Password Protection** - Optional password layer on top of encryption
-- 📋 **Custom Expiration Times** - Precise expiration beyond presets
 - 📋 **Short URLs** - Shorter file IDs for cleaner links
 - 📋 **IP/Geo Restriction** - Restrict downloads by country or IP
 - 📋 **Self-destructing Voice Message** - Encrypted audio messages

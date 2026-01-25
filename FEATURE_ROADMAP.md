@@ -9,8 +9,8 @@
 | # | Feature | Category | Complexity | Status |
 |---|---------|----------|------------|--------|
 | 1 | Multiple Files / Zip Bundle | Core | Medium | ✅ Done |
-| 2 | Password Protection (Double Encryption) | Security | Medium | 📋 Planned |
-| 3 | Custom Expiration Times | UX | Low | 📋 Planned |
+| 2 | Custom Expiration Times | UX | Low | ✅ Done |
+| 3 | Password Protection (Double Encryption) | Security | Medium | 📋 Planned |
 | 4 | IP/Geo Restriction | Security | Medium | 📋 Planned |
 | 5 | Self-destructing Voice Message | New Content Type | Medium-High | 📋 Planned |
 | 6 | Dead Man's Switch | Unique | High | 📋 Planned |
@@ -28,7 +28,7 @@
 - 📋 **IP/Geo Restriction** - Restrict downloads by country or IP range
 
 ### UX Improvements
-- 📋 **Custom Expiration Times** - Precise expiration (minutes/hours/days) beyond presets
+- ✅ **Custom Expiration Times** - Precise expiration (5 min - 7 days) with real-time preview
 - 📋 **Short URLs** - Shorter file IDs for cleaner, easier-to-share links
 
 ### New Content Types
@@ -52,10 +52,12 @@
 - Password never sent to server
 - Recipient needs link AND password (shared via different channel)
 
-### 3. Custom Expiration Times
-- Time picker UI (minutes/hours/days + specific datetime)
-- Max cap (7 days?) to manage storage costs
-- Keep quick presets (1h, 12h, 24h) + add custom option
+### 3. Custom Expiration Times ✅
+- Dropdown selects for minutes/hours/days with predefined values
+- Range: 5 minutes to 7 days (manages storage costs)
+- Quick presets (1h, 12h, 24h) + custom option
+- Real-time expiration preview in user's local timezone
+- Backend validates and accepts both preset strings and numeric minutes
 
 ### 4. IP/Geo Restriction
 - Use MaxMind GeoIP or CloudFront geo headers
@@ -86,17 +88,20 @@
 
 ## 🚀 Implementation Priority
 
+### ✅ Completed
+1. Multiple Files / Zip Bundle
+2. Custom Expiration Times
+
 ### Quick Wins (Low Complexity)
-1. Custom Expiration Times
-2. Short URLs
+3. Short URLs
 
 ### Medium Effort
-3. Password Protection
-4. IP/Geo Restriction
+4. Password Protection
+5. IP/Geo Restriction
 
 ### Larger Features
-5. Self-destructing Voice Message
-6. Dead Man's Switch
+6. Self-destructing Voice Message
+7. Dead Man's Switch
 
 ---
 

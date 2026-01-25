@@ -10,7 +10,7 @@
 |---|---------|----------|------------|--------|
 | 1 | Multiple Files / Zip Bundle | Core | Medium | ✅ Done |
 | 2 | Custom Expiration Times | UX | Low | ✅ Done |
-| 3 | Password Protection (Double Encryption) | Security | Medium | 📋 Planned |
+| 3 | Vault (Password Protection) | Security | Medium | ✅ Done |
 | 4 | IP/Geo Restriction | Security | Medium | 📋 Planned |
 | 5 | Self-destructing Voice Message | New Content Type | Medium-High | 📋 Planned |
 | 6 | Dead Man's Switch | Unique | High | 📋 Planned |
@@ -24,7 +24,7 @@
 - ✅ **Multiple Files / Zip Bundle** - Upload multiple files as encrypted bundle
 
 ### Security
-- 📋 **Password Protection (Double Encryption)** - Optional password layer on top of encryption key
+- ✅ **Vault (Password Protection)** - Password-protected multi-access sharing with PBKDF2
 - 📋 **IP/Geo Restriction** - Restrict downloads by country or IP range
 
 ### UX Improvements
@@ -46,11 +46,13 @@
 - Encrypt the bundle as single file
 - Show file list on download page before commit
 
-### 2. Password Protection (Double Encryption)
-- PBKDF2/Argon2 to derive key from password
-- Combine with random key for double encryption
-- Password never sent to server
+### 2. Vault (Password Protection) ✅
+- PBKDF2 to derive key from password (100k iterations, SHA-256)
+- Double encryption: content with data key, data key with password key
+- Password never sent to server (only salt stored)
 - Recipient needs link AND password (shared via different channel)
+- Multi-access mode: unlimited downloads until expiry
+- Supports both files and text secrets
 
 ### 3. Custom Expiration Times ✅
 - Dropdown selects for minutes/hours/days with predefined values
@@ -91,12 +93,12 @@
 ### ✅ Completed
 1. Multiple Files / Zip Bundle
 2. Custom Expiration Times
+3. Vault (Password Protection)
 
 ### Quick Wins (Low Complexity)
-3. Short URLs
+4. Short URLs
 
 ### Medium Effort
-4. Password Protection
 5. IP/Geo Restriction
 
 ### Larger Features
@@ -116,4 +118,4 @@
 
 ---
 
-*Last updated: January 2025*
+*Last updated: January 2026*

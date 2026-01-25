@@ -12,9 +12,10 @@
 - **One-time access** — Each file/text can only be viewed once, then it's automatically deleted
 - **Network failure protection** — 10-minute retry window if download is interrupted
 
-### 📝 Two Sharing Modes
-- **File Sharing** — Upload files up to 500MB with secure encryption
-- **Text Secrets** — Share encrypted text snippets (up to 1000 characters) without uploading files
+### 📝 Three Sharing Modes
+- **File Sharing** — Upload files up to 500MB with secure encryption (one-time access)
+- **Text Secrets** — Share encrypted text snippets (up to 1000 characters) without uploading files (one-time access)
+- **Vault** — Password-protected sharing with unlimited access until expiry (multi-access)
 
 ### 🚫 No Tracking, No Accounts
 - **No registration** — No accounts, no email, no cookies
@@ -69,6 +70,20 @@
 8. The link becomes invalid forever
 
 **Network Failure Protection**: If the download is interrupted (network error, browser crash), you can retry within 10 minutes using the same link. This ensures that you don't lose access due to temporary technical problems while maintaining the security of one-time downloads.
+
+### Vault (Password-Protected Multi-Access)
+
+1. Select the **Vault** tab and choose File or Text
+2. Enter your content and set a password (min 4 characters)
+3. Your browser:
+   - Generates a random data encryption key
+   - Derives a password key using PBKDF2 (100,000 iterations, SHA-256)
+   - Encrypts the data key with the password-derived key
+   - Encrypts content with the data key (AES-256-GCM)
+4. Encrypted content + encrypted key + salt are uploaded
+5. You receive a link (password NOT included - share separately!)
+6. Recipients enter the password to decrypt and access content
+7. **Multi-access**: Can be downloaded unlimited times until expiry
 
 ---
 
@@ -343,7 +358,7 @@ Planned features for sdbx:
 
 - ✅ **Multiple Files / Zip Bundle** - Upload multiple files as encrypted bundle
 - ✅ **Custom Expiration Times** - Precise expiration (5 min - 7 days) with real-time preview
-- 📋 **Password Protection** - Optional password layer on top of encryption
+- ✅ **Vault (Password Protection)** - Password-protected multi-access sharing with PBKDF2 key derivation
 - 📋 **Short URLs** - Shorter file IDs for cleaner links
 - 📋 **IP/Geo Restriction** - Restrict downloads by country or IP
 - 📋 **Self-destructing Voice Message** - Encrypted audio messages

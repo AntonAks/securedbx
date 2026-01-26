@@ -1,6 +1,7 @@
 /**
  * Vault upload functionality
  * Handles password-protected multi-access file and text sharing
+ * Supports single files and multi-file ZIP bundles
  */
 
 'use strict';
@@ -22,9 +23,11 @@
         // File input
         dropZone: document.getElementById('vault-drop-zone'),
         fileInput: document.getElementById('vault-file-input'),
-        fileInfo: document.getElementById('vault-file-info'),
-        fileName: document.getElementById('vault-file-name'),
-        fileSize: document.getElementById('vault-file-size'),
+        fileList: document.getElementById('vault-file-list'),
+        fileItems: document.getElementById('vault-file-items'),
+        fileCount: document.getElementById('vault-file-count'),
+        totalSize: document.getElementById('vault-total-size'),
+        clearFilesBtn: document.getElementById('vault-clear-files-btn'),
         // Text input
         textInput: document.getElementById('vault-text-input'),
         charCount: document.getElementById('vault-char-count'),
@@ -44,7 +47,7 @@
     };
 
     // State
-    let selectedFile = null;
+    let selectedFiles = [];
 
     /**
      * Initialize vault upload functionality
@@ -63,6 +66,7 @@
         elements.dropZone.addEventListener('dragleave', handleDragLeave);
         elements.dropZone.addEventListener('drop', handleDrop);
         elements.fileInput.addEventListener('change', handleFileSelect);
+        elements.clearFilesBtn.addEventListener('click', clearFiles);
 
         // Text input
         elements.textInput.addEventListener('input', handleTextInput);
@@ -138,7 +142,7 @@
 
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-            selectFile(files[0]);
+            addFiles(files);
         }
     }
 
@@ -148,30 +152,110 @@
     function handleFileSelect(e) {
         const files = e.target.files;
         if (files.length > 0) {
-            selectFile(files[0]);
+            addFiles(files);
         }
     }
 
     /**
-     * Select a file for vault upload
+     * Add files to selection
+     * @param {FileList} newFiles
      */
-    function selectFile(file) {
-        // Validate file size
-        if (file.size > CONFIG.MAX_FILE_SIZE) {
-            Utils.showError('File size exceeds 500 MB limit');
+    function addFiles(newFiles) {
+        const newFilesArray = Array.from(newFiles);
+
+        // Combine with existing files
+        const combinedFiles = [...selectedFiles, ...newFilesArray];
+
+        // Validate combined files
+        const validation = ZipBundle.validateFiles(combinedFiles);
+        if (!validation.valid) {
+            Utils.showError(validation.error);
             return;
         }
 
-        if (file.size === 0) {
-            Utils.showError('Cannot upload empty file');
+        // Update state
+        selectedFiles = combinedFiles;
+        updateFileListUI();
+        updateUploadButtonState();
+    }
+
+    /**
+     * Update file list UI
+     */
+    function updateFileListUI() {
+        if (selectedFiles.length === 0) {
+            elements.fileList.style.display = 'none';
             return;
         }
 
-        selectedFile = file;
-        elements.fileName.textContent = file.name;
-        elements.fileSize.textContent = Utils.formatFileSize(file.size);
-        elements.fileInfo.style.display = 'block';
+        // Show file list
+        elements.fileList.style.display = 'block';
 
+        // Update counts
+        elements.fileCount.textContent = selectedFiles.length;
+
+        // Calculate total size
+        const totalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+        elements.totalSize.textContent = Utils.formatFileSize(totalSize);
+
+        // Render file items
+        elements.fileItems.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+            const li = document.createElement('li');
+            li.className = 'flex justify-between items-center text-sm py-1 border-b border-gray-200 dark:border-slate-700 last:border-0';
+            li.innerHTML = `
+                <span class="text-gray-700 dark:text-slate-300 truncate mr-2" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <span class="text-gray-500 dark:text-slate-500">${Utils.formatFileSize(file.size)}</span>
+                    <button type="button" class="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 p-1" data-remove-index="${index}" title="Remove file">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            elements.fileItems.appendChild(li);
+        });
+
+        // Add event listeners to remove buttons
+        elements.fileItems.querySelectorAll('[data-remove-index]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.currentTarget.dataset.removeIndex, 10);
+                removeFile(index);
+            });
+        });
+    }
+
+    /**
+     * Escape HTML special characters
+     * @param {string} text
+     * @returns {string}
+     */
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * Remove file at index
+     * @param {number} index
+     */
+    function removeFile(index) {
+        if (index >= 0 && index < selectedFiles.length) {
+            selectedFiles.splice(index, 1);
+            updateFileListUI();
+            updateUploadButtonState();
+        }
+    }
+
+    /**
+     * Clear all selected files
+     */
+    function clearFiles() {
+        selectedFiles = [];
+        elements.fileInput.value = '';
+        updateFileListUI();
         updateUploadButtonState();
     }
 
@@ -206,7 +290,7 @@
 
         let hasContent = false;
         if (contentType === 'file') {
-            hasContent = selectedFile !== null;
+            hasContent = selectedFiles.length > 0;
         } else {
             hasContent = elements.textInput.value.trim().length > 0;
         }
@@ -310,15 +394,32 @@
             elements.progressSection.style.display = 'block';
 
             // Get content to encrypt
-            let content, fileName;
+            let fileToUpload, uploadFileName;
             if (contentType === 'file') {
-                if (!selectedFile) {
-                    Utils.showError('Please select a file');
+                if (selectedFiles.length === 0) {
+                    Utils.showError('Please select at least one file');
                     resetForm();
                     return;
                 }
-                content = selectedFile;
-                fileName = selectedFile.name;
+
+                if (selectedFiles.length === 1) {
+                    // Single file: no ZIP needed
+                    fileToUpload = selectedFiles[0];
+                    uploadFileName = selectedFiles[0].name;
+                    updateProgress(0, 'Preparing file...');
+                } else {
+                    // Multiple files: create ZIP bundle
+                    updateProgress(0, 'Creating ZIP bundle...');
+                    const bundle = await ZipBundle.createBundle(
+                        selectedFiles,
+                        (percent, message) => {
+                            // Map bundle creation to 0-5% of overall progress
+                            updateProgress(percent * 0.05, message);
+                        }
+                    );
+                    fileToUpload = bundle.blob;
+                    uploadFileName = bundle.filename;
+                }
             } else {
                 const text = elements.textInput.value.trim();
                 if (!text) {
@@ -326,8 +427,8 @@
                     resetForm();
                     return;
                 }
-                content = new TextEncoder().encode(text);
-                fileName = null;
+                fileToUpload = new TextEncoder().encode(text);
+                uploadFileName = null;
             }
 
             // Step 1: Generate random data key
@@ -349,11 +450,11 @@
             updateProgress(20, 'Encrypting content...');
             let encryptedData;
             if (contentType === 'file') {
-                encryptedData = await CryptoModule.encryptFile(content, dataKey, (p) => {
+                encryptedData = await CryptoModule.encryptFile(fileToUpload, dataKey, (p) => {
                     updateProgress(20 + p * 0.3, `Encrypting... ${Math.round(p)}%`);
                 });
             } else {
-                encryptedData = await CryptoModule.encrypt(content, dataKey);
+                encryptedData = await CryptoModule.encrypt(fileToUpload, dataKey);
             }
 
             // Step 5: Initialize upload
@@ -400,7 +501,7 @@
 
             // Generate vault share URL
             // Format: #file_id#salt#filename#vault
-            const encodedFileName = fileName ? encodeURIComponent(fileName) : '';
+            const encodedFileName = uploadFileName ? encodeURIComponent(uploadFileName) : '';
             const shareUrl = `/share.html#${data.file_id}#${saltBase64}#${encodedFileName}#vault`;
 
             setTimeout(() => {
@@ -458,9 +559,9 @@
      * Reset form to initial state
      */
     function resetForm() {
-        selectedFile = null;
+        selectedFiles = [];
         elements.fileInput.value = '';
-        elements.fileInfo.style.display = 'none';
+        elements.fileList.style.display = 'none';
         elements.uploadBtn.disabled = true;
         elements.progressSection.style.display = 'none';
         elements.progressFill.style.width = '0%';

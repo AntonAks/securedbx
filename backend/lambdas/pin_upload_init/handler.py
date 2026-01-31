@@ -130,6 +130,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
                     return success_response({
                         "file_id": candidate_id,
+                        "salt": salt,
                         "expires_at": expires_at,
                     })
 
@@ -164,6 +165,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                     return success_response({
                         "file_id": candidate_id,
                         "upload_url": upload_url,
+                        "salt": salt,
                         "expires_at": expires_at,
                     })
 

@@ -12,9 +12,10 @@
 - **One-time access** — Each file/text can only be viewed once, then it's automatically deleted
 - **Network failure protection** — 10-minute retry window if download is interrupted
 
-### 📝 Three Sharing Modes
-- **File Sharing** — Upload files up to 500MB with secure encryption (one-time access)
-- **Text Secrets** — Share encrypted text snippets (up to 1000 characters) without uploading files (one-time access)
+### 📝 Four Sharing Modes
+- **URL Link** — Share files or text via encrypted URL. Key is embedded in the URL fragment (one-time access)
+- **PIN Code** — Share files or text protected by a 4-8 digit PIN. Uses PBKDF2 key derivation with server-side salt (configurable: one-time or keep until expiry)
+- **Text Secrets** — Share encrypted text snippets (up to 1000 characters) via URL or PIN without uploading files
 - **Vault** — Password-protected sharing with unlimited access until expiry (multi-access)
 
 ### 🚫 No Tracking, No Accounts
@@ -27,6 +28,11 @@
 - **Dark mode** — Automatic dark/light theme with manual toggle
 - **Responsive** — Works seamlessly on desktop and mobile devices
 - **Accessible** — WCAG 2.1 AA compliant
+
+### 📦 Convenient Sharing
+- **Multi-file bundles** — Upload up to 10 files at once, automatically bundled into an encrypted ZIP
+- **QR codes** — Generate QR codes for easy mobile sharing
+- **Flexible expiry** — One-time delete after download or keep until expiry (PIN mode)
 
 ### 🛡️ Bot Protection
 - **reCAPTCHA v3** — Invisible bot detection on all POST endpoints
@@ -85,6 +91,18 @@
 6. Recipients enter the password to decrypt and access content
 7. **Multi-access**: Can be downloaded unlimited times until expiry
 
+### PIN Code Sharing
+
+1. Select the **PIN** method and choose File or Text
+2. Enter a 4-8 digit PIN code and choose expiration time
+3. Your browser requests a unique salt from the server
+4. A key is derived from PIN + salt using PBKDF2 (100,000 iterations, SHA-256)
+5. Content is encrypted with the derived key (AES-256-GCM)
+6. Encrypted content is uploaded to secure storage
+7. You receive a short File ID to share along with the PIN
+8. **Toggle option**: Delete after first download, or keep until expiry
+9. Recipient enters the File ID and PIN to decrypt and access content
+
 ---
 
 ## Security
@@ -139,7 +157,9 @@
 
 - Maximum file size: 500 MB
 - Files expire after max 7 days (custom) or 24 hours (preset)
-- Each file can only be downloaded once (with 10-minute retry window for network failures)
+- URL mode: each file can only be downloaded once (with 10-minute retry window). PIN mode: configurable one-time or keep until expiry
+- Multi-file upload: up to 10 files per bundle
+- Maximum text secret size: 1,000 characters
 - Desktop browsers recommended (mobile support available)
 
 ---
@@ -158,7 +178,7 @@
 - **Responsive Design** - Mobile-first approach
 
 ### Backend
-- **AWS Lambda** - 7 serverless functions (Python 3.12)
+- **AWS Lambda** - 10 serverless functions (Python 3.12)
 - **API Gateway** - RESTful API with request validation
 - **Lambda Layers** - Shared dependencies (boto3, requests)
 
@@ -236,14 +256,17 @@ python -m http.server 8000
 ```
 sdbx/
 ├── backend/
-│   ├── lambdas/           # 7 Lambda functions
+│   ├── lambdas/           # 10 Lambda functions
 │   │   ├── upload_init/
 │   │   ├── download/
 │   │   ├── confirm_download/
 │   │   ├── get_metadata/
 │   │   ├── get_stats/
 │   │   ├── cleanup/
-│   │   └── report_abuse/
+│   │   ├── report_abuse/
+│   │   ├── pin_initiate/    # PIN: generate salt
+│   │   ├── pin_upload_init/ # PIN: initialize upload
+│   │   └── pin_verify/      # PIN: verify & download
 │   ├── shared/            # Shared utilities
 │   │   ├── constants.py
 │   │   ├── dynamo.py      # DynamoDB operations
@@ -252,7 +275,7 @@ sdbx/
 │   │   ├── validation.py
 │   │   ├── response.py
 │   │   └── ...
-│   └── tests/             # 135+ backend tests
+│   └── tests/             # 226 backend tests
 ├── frontend/
 │   ├── css/
 │   │   ├── input.css      # Tailwind source
@@ -263,11 +286,13 @@ sdbx/
 │   │   ├── upload.js
 │   │   ├── download.js
 │   │   ├── text-upload.js
+│   │   ├── pin-upload.js     # PIN upload flow
+│   │   ├── pin-download.js   # PIN download flow
 │   │   ├── utils.js
 │   │   ├── theme-toggle.js   # Dark mode
 │   │   ├── header.js      # Shared navigation
 │   │   └── init.js
-│   ├── tests/             # 24 frontend tests
+│   ├── tests/             # 84 frontend tests
 │   ├── index.html         # Upload page
 │   ├── download.html      # Download page
 │   └── about.html         # About page
@@ -294,7 +319,7 @@ sdbx/
 
 ## Testing
 
-sdbx has a comprehensive test suite with **159+ tests** and **ZERO mocks**:
+sdbx has a comprehensive test suite with **310+ tests** and **ZERO mocks**:
 
 ```bash
 # Run all tests (backend + frontend)
@@ -311,8 +336,8 @@ make test-backend-cov
 ```
 
 **Test Coverage:**
-- **Backend**: 135+ tests covering validation, response formatting, JSON encoding, security
-- **Frontend**: 24 tests covering AES-256-GCM encryption, key management, URL encoding
+- **Backend**: 226 tests covering validation, response formatting, JSON encoding, security, PIN flows
+- **Frontend**: 84 tests covering AES-256-GCM encryption, PBKDF2 key derivation, PIN crypto, multi-file bundles
 - **Coverage**: ~80% of shared modules
 
 **What's Tested:**
@@ -325,6 +350,9 @@ make test-backend-cov
 - ✅ Response formatting and CORS headers
 - ✅ Decimal encoding for DynamoDB
 - ✅ CloudFront origin verification
+- ✅ PBKDF2 key derivation (PIN mode)
+- ✅ PIN upload/download encryption round-trips
+- ✅ Multi-file ZIP bundle encryption
 - ✅ Edge cases and error handling
 
 ---
@@ -359,6 +387,7 @@ Planned features for sdbx:
 - ✅ **Multiple Files / Zip Bundle** - Upload multiple files as encrypted bundle
 - ✅ **Custom Expiration Times** - Precise expiration (5 min - 7 days) with real-time preview
 - ✅ **Vault (Password Protection)** - Password-protected multi-access sharing with PBKDF2 key derivation
+- ✅ **PIN Code Sharing** - Share via numeric PIN with PBKDF2 key derivation and configurable access mode
 - 📋 **Short URLs** - Shorter file IDs for cleaner links
 - 📋 **IP/Geo Restriction** - Restrict downloads by country or IP
 - 📋 **Self-destructing Voice Message** - Encrypted audio messages

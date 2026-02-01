@@ -22,7 +22,7 @@
             <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">What is sdbx?</h2>
             <p class="text-gray-600 dark:text-slate-300 leading-relaxed mb-4">
                 sdbx is a <strong class="text-gray-900 dark:text-slate-100">zero-knowledge file sharing service</strong> designed with privacy as the core principle.
-                Share files securely with end-to-end encryption, one-time downloads, and no user tracking.
+                Share files and text securely with end-to-end encryption — via URL link, PIN code, or password-protected vault — with no user tracking.
             </p>
             <p class="text-gray-600 dark:text-slate-300 leading-relaxed">
                 Unlike traditional file sharing services, sdbx ensures that your files are encrypted <em class="text-gray-700 dark:text-slate-200">before</em> they
@@ -100,9 +100,35 @@
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100">Self-Destructing Files</h3>
                     </div>
                     <p class="text-gray-500 dark:text-slate-400 text-sm leading-relaxed">
-                        Each file can only be downloaded once, then it's automatically and
-                        permanently deleted from our servers. Network failure protection provides
-                        a 10-minute retry window if your download is interrupted.
+                        In URL mode, each file can only be downloaded once, then it's permanently deleted.
+                        In PIN mode, you can choose between one-time access or keeping content until expiry.
+                        Network failure protection provides a 10-minute retry window.
+                    </p>
+                </div>
+
+                <div class="flex flex-col items-start">
+                    <div class="flex items-center gap-3 mb-3">
+                        <svg class="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path d="M12 11c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm-6 0c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm12 0c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z"/>
+                        </svg>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100">PIN Code Sharing</h3>
+                    </div>
+                    <p class="text-gray-500 dark:text-slate-400 text-sm leading-relaxed">
+                        Share files or text protected by a 4-8 digit PIN. The server generates a unique salt,
+                        and a key is derived using PBKDF2 (100,000 iterations). No encryption key in the URL.
+                    </p>
+                </div>
+
+                <div class="flex flex-col items-start">
+                    <div class="flex items-center gap-3 mb-3">
+                        <svg class="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                        </svg>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100">Vault Mode</h3>
+                    </div>
+                    <p class="text-gray-500 dark:text-slate-400 text-sm leading-relaxed">
+                        Password-protected sharing with unlimited access until expiry. Double encryption layer:
+                        content encrypted with a random data key, which is itself encrypted with a password-derived key.
                     </p>
                 </div>
             </div>
@@ -117,6 +143,7 @@
                 <li><strong class="text-gray-900 dark:text-slate-100">Bot Protection:</strong> Google reCAPTCHA v3 prevents automated abuse</li>
                 <li><strong class="text-gray-900 dark:text-slate-100">Two-Phase Download:</strong> Reserve-then-confirm system prevents race conditions and allows retry on network failure</li>
                 <li><strong class="text-gray-900 dark:text-slate-100">Origin Verification:</strong> CloudFront custom headers block direct API access</li>
+                <li><strong class="text-gray-900 dark:text-slate-100">PBKDF2 Key Derivation:</strong> PIN and Vault modes use 100,000 iterations with SHA-256 for key derivation</li>
                 <li><strong class="text-gray-900 dark:text-slate-100">Automatic Cleanup:</strong> Expired files are deleted hourly</li>
             </ul>
         </section>
@@ -140,8 +167,10 @@
             <p class="text-gray-600 dark:text-slate-300 leading-relaxed mb-4">To ensure optimal performance and security, sdbx has the following limitations:</p>
             <ul class="text-gray-600 dark:text-slate-300 space-y-2 ml-6 list-disc">
                 <li>Maximum file size: 500 MB</li>
-                <li>Files expire after max 24 hours</li>
-                <li>Each file can only be downloaded once (with 10-minute retry window for network failures)</li>
+                <li>Content expires after max 7 days (custom) or 24 hours (preset)</li>
+                <li>URL mode: one-time download only. PIN mode: configurable one-time or keep until expiry. Vault: unlimited access until expiry</li>
+                <li>Maximum text secret size: 1,000 characters</li>
+                <li>Multi-file upload: up to 10 files per bundle</li>
                 <li>Desktop browsers recommended (mobile support available)</li>
             </ul>
         </section>

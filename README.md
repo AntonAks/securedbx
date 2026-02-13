@@ -149,7 +149,7 @@
 - ✅ Upload timestamp
 - ✅ Expiration time
 - ✅ Download status (reserved/confirmed)
-- ✅ IP address hash (SHA-256, for abuse prevention only)
+- ✅ IP address hash (HMAC-SHA256 with secret salt, for abuse prevention only)
 
 ---
 
@@ -230,6 +230,26 @@ make deploy-dev
 # 6. Get your CloudFront URL
 cd terraform/environments/dev && terraform output cloudfront_domain
 ```
+
+### Salt Management
+
+IP addresses are hashed using HMAC-SHA256 with a secret salt stored in AWS Systems Manager Parameter Store. This prevents rainbow table attacks against the IP hash database.
+
+```bash
+# Initialize salt (once per environment)
+make init-salt-dev
+make init-salt-prod
+
+# Check if salt exists
+make check-salt-dev
+make check-salt-prod
+```
+
+The salt is:
+- KMS encrypted in Parameter Store (never in Terraform state or code)
+- Cached in Lambda memory (one API call per cold start)
+- Audited via CloudTrail
+- Free (within AWS free tier)
 
 ### Local Frontend Development
 
@@ -374,7 +394,7 @@ The only data we store is:
 - Encrypted file blobs (which we cannot decrypt)
 - File size, upload timestamp, and expiration time
 - Download reservation status
-- IP address hash (SHA-256, for abuse prevention only, not linked to files)
+- IP address hash (HMAC-SHA256 with secret salt, for abuse prevention only, not linked to files)
 
 **That's it.** No personal information, no tracking, no analytics.
 

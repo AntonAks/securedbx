@@ -51,6 +51,8 @@ deploy-dev: build-lambdas-dev build-frontend ## Deploy dev environment (backend 
 		cd terraform/environments/dev && \
 		cp -n terraform.tfvars.example terraform.tfvars 2>/dev/null || true && \
 		terraform init -backend-config="bucket=$$BACKEND_BUCKET" && \
+		echo "🔑 Checking IP hash salt..." && \
+		(aws ssm get-parameter --name "/sdbx/dev/ip-hash-salt" --query "Parameter.Name" --output text 2>/dev/null && echo "  ✓ Salt found" || (echo "  Salt not found — initializing..." && ../../../scripts/init-ip-hash-salt.sh sdbx dev)) && \
 		terraform validate && \
 		terraform plan -out=tfplan && \
 		echo "" && \
@@ -86,6 +88,9 @@ deploy-prod: build-lambdas-prod build-frontend ## Deploy prod environment (backe
 		cd terraform/environments/prod && \
 		cp -n terraform.tfvars.example terraform.tfvars 2>/dev/null || true && \
 		terraform init -backend-config="bucket=$$BACKEND_BUCKET" && \
+		echo "🔑 Checking IP hash salt..." && \
+		(aws ssm get-parameter --name "/sdbx/prod/ip-hash-salt" --query "Parameter.Name" --output text 2>/dev/null && echo "  ✓ Salt found" || (echo "  Salt not found — initializing..." && ../../../scripts/init-ip-hash-salt.sh sdbx prod)) && \
+		terraform validate && \
 		terraform plan -out=tfplan && \
 		echo "" && \
 		read -p "Apply to PRODUCTION? (yes/no): " confirm && \

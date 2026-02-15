@@ -81,7 +81,7 @@ yarn-error.log*
 package-lock.json
 
 # Frontend build output
-frontend/css/output.css
+frontend/dist/
 
 # Logs
 logs/

@@ -29,10 +29,10 @@ source venv/bin/activate
 pip install -r requirements.txt -r requirements-test.txt
 pytest
 
-# Frontend  
+# Frontend
+cd frontend
 npm install
-npm run build:css
-cd frontend && node --test tests/*.test.js
+npx vitest run
 ```
 
 ---
@@ -93,7 +93,7 @@ make test-frontend     # Frontend only
 
 ## 🔒 Security
 
-**Critical:** Changes to `frontend/js/crypto.js` need extra review
+**Critical:** Changes to `frontend/src/lib/crypto.js` need extra review
 - Discuss in issue first
 - Add comprehensive tests
 - Expect thorough code review

@@ -171,8 +171,10 @@
 ![High level architecture](architecture.jpeg)
 
 ### Frontend
-- **Vanilla JavaScript** - No frameworks, pure Web Crypto API
+- **Vue 3** - Component-based SPA with Vue Router (hash mode) and Pinia stores
+- **Vite** - Fast build tooling with HMR dev server
 - **Tailwind CSS** - Modern utility-first CSS framework
+- **Web Crypto API** - AES-256-GCM encryption, PBKDF2 key derivation
 - **Dark Mode** - CSS class-based theme switching with localStorage persistence
 - **Web Workers** - Background encryption/decryption for large files
 - **Responsive Design** - Mobile-first approach
@@ -206,7 +208,7 @@
 - AWS Account
 - Terraform >= 1.5
 - Python 3.12
-- Node.js (for Tailwind CSS)
+- Node.js >= 18 (for frontend build)
 - AWS CLI configured (`aws configure`)
 
 ### Quick Start - Deploy to AWS
@@ -254,21 +256,18 @@ The salt is:
 ### Local Frontend Development
 
 ```bash
-# Install dependencies (Tailwind CSS)
-npm install
+# Install dependencies
+cd frontend && npm install
 
-# Watch mode - auto-rebuild CSS on changes
+# Start Vite dev server (with HMR)
 make dev-frontend
+# Visit http://localhost:5173
 
-# Or manually build CSS
+# Build for production
 make build-frontend
 
-# Serve frontend locally
-cd frontend
-python -m http.server 8000
-# Visit http://localhost:8000
-
-# Note: You'll need to update API URLs to point to your deployed backend
+# The dev server proxies API requests to your deployed backend.
+# Set VITE_API_BASE=/dev for dev environment builds.
 ```
 
 ### Project Structure
@@ -296,26 +295,24 @@ sdbx/
 │   │   ├── response.py
 │   │   └── ...
 │   └── tests/             # 226 backend tests
-├── frontend/
-│   ├── css/
-│   │   ├── input.css      # Tailwind source
-│   │   └── output.css     # Built CSS
-│   ├── js/
-│   │   ├── crypto.js      # AES-256-GCM encryption
-│   │   ├── crypto-worker.js  # Web Worker for large files
-│   │   ├── upload.js
-│   │   ├── download.js
-│   │   ├── text-upload.js
-│   │   ├── pin-upload.js     # PIN upload flow
-│   │   ├── pin-download.js   # PIN download flow
-│   │   ├── utils.js
-│   │   ├── theme-toggle.js   # Dark mode
-│   │   ├── header.js      # Shared navigation
-│   │   └── init.js
-│   ├── tests/             # 84 frontend tests
-│   ├── index.html         # Upload page
-│   ├── download.html      # Download page
-│   └── about.html         # About page
+├── frontend/              # Vue 3 SPA (Vite)
+│   ├── src/
+│   │   ├── main.js        # App entry point
+│   │   ├── App.vue        # Root component
+│   │   ├── router/        # Vue Router (hash mode)
+│   │   ├── stores/        # Pinia stores (theme, stats)
+│   │   ├── lib/
+│   │   │   ├── crypto.js  # AES-256-GCM encryption
+│   │   │   ├── zip-bundle.js  # Multi-file ZIP bundling
+│   │   │   ├── utils.js   # Shared utilities
+│   │   │   └── api.js     # API base URL config
+│   │   ├── workers/       # Web Workers for large files
+│   │   ├── composables/   # Vue composables (upload, download, etc.)
+│   │   ├── components/    # Reusable Vue components
+│   │   └── views/         # Page views (Home, Download, Share, FAQ, About)
+│   ├── tests/             # 82 frontend tests (Vitest)
+│   ├── index.html         # SPA entry point
+│   └── vite.config.js     # Vite + Vue plugin config
 ├── terraform/
 │   ├── environments/
 │   │   ├── dev/
@@ -339,7 +336,7 @@ sdbx/
 
 ## Testing
 
-sdbx has a comprehensive test suite with **310+ tests** and **ZERO mocks**:
+sdbx has a comprehensive test suite with **300+ tests** and **ZERO mocks**:
 
 ```bash
 # Run all tests (backend + frontend)
@@ -357,13 +354,13 @@ make test-backend-cov
 
 **Test Coverage:**
 - **Backend**: 226 tests covering validation, response formatting, JSON encoding, security, PIN flows
-- **Frontend**: 84 tests covering AES-256-GCM encryption, PBKDF2 key derivation, PIN crypto, multi-file bundles
+- **Frontend**: 82 tests (Vitest) covering AES-256-GCM encryption, PBKDF2 key derivation, PIN crypto, multi-file bundles
 - **Coverage**: ~80% of shared modules
 
 **What's Tested:**
 - ✅ AES-256-GCM encryption/decryption round-trips
 - ✅ Key generation and export/import
-- ✅ Large file handling (10 MB)
+- ✅ Large file handling (1 MB)
 - ✅ Unicode text preservation
 - ✅ Wrong key rejection
 - ✅ Input validation (file ID, size, TTL)

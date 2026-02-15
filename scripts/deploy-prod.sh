@@ -94,7 +94,7 @@ terraform output
 echo ""
 
 echo "Next steps:"
-echo "  1. Deploy frontend: cd ../../../frontend && aws s3 sync . s3://\$(terraform -chdir=../terraform/environments/prod output -raw static_bucket_name)/"
+echo "  1. Deploy frontend: cd ../../../frontend && npm run build && aws s3 sync dist/ s3://\$(terraform -chdir=../terraform/environments/prod output -raw static_bucket_name)/"
 echo "  2. Test API endpoint: curl \$(terraform -chdir=../terraform/environments/prod output -raw api_endpoint)/upload/init"
 echo "  3. Open CloudFront URL: \$(terraform -chdir=../terraform/environments/prod output -raw cloudfront_domain)"
 echo ""

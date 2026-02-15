@@ -22,23 +22,23 @@ build-lambdas-dev: ## Build Lambda deployment packages for dev
 build-lambdas-prod: ## Build Lambda deployment packages for prod
 	@./scripts/build-lambdas.sh prod
 
-install-frontend-deps: ## Install frontend dependencies (Tailwind CSS)
-	@if [ ! -d "node_modules" ]; then \
+install-frontend-deps: ## Install frontend dependencies
+	@if [ ! -d "frontend/node_modules" ]; then \
 		echo "📦 Installing frontend dependencies..."; \
-		npm install; \
+		cd frontend && npm install; \
 	else \
 		echo "✓ Frontend dependencies already installed"; \
 	fi
 
-build-frontend: install-frontend-deps ## Build frontend CSS with Tailwind
-	@echo "🎨 Building Tailwind CSS..."
-	@npm run build:css
-	@echo "  ✓ CSS built to frontend/css/output.css"
+build-frontend: install-frontend-deps ## Build frontend (Vue 3 + Vite)
+	@echo "🏗️  Building frontend..."
+	@cd frontend && npm run build
+	@echo "  ✓ Frontend built to frontend/dist/"
 
-dev-frontend: install-frontend-deps ## Watch mode for frontend development
-	@echo "👀 Watching frontend CSS changes..."
+dev-frontend: install-frontend-deps ## Start frontend dev server
+	@echo "🚀 Starting Vite dev server..."
 	@echo "Press Ctrl+C to stop"
-	@npm run dev:css
+	@cd frontend && npm run dev
 
 deploy-dev-infra: build-lambdas-dev ## Deploy dev infrastructure only (without frontend)
 	@./scripts/deploy-dev.sh
@@ -60,18 +60,13 @@ deploy-dev: build-lambdas-dev build-frontend ## Deploy dev environment (backend 
 		if [ "$$confirm" = "yes" ]; then \
 			terraform apply tfplan && rm -f tfplan && \
 			echo "" && \
-			echo "📦 Deploying frontend..." && \
+			echo "📦 Building and deploying frontend..." && \
 			cd ../../.. && \
-			echo "🔧 Patching API paths for dev environment..." && \
-			find frontend/js -name "*.js" -exec sed -i "s|'/prod'|'/dev'|g" {} \; && \
-			find frontend/js -name "*.js" -exec sed -i "s|/prod/|/dev/|g" {} \; && \
+			cd frontend && VITE_API_BASE=/dev npm run build && cd .. && \
 			BUCKET=$$(cd terraform/environments/dev && terraform output -raw static_bucket_name) && \
-			aws s3 sync frontend/ s3://$$BUCKET/ --delete --exclude "tests/*" && \
+			aws s3 sync frontend/dist/ s3://$$BUCKET/ --delete && \
 			DIST_ID=$$(cd terraform/environments/dev && terraform output -raw cloudfront_distribution_id) && \
 			aws cloudfront create-invalidation --distribution-id $$DIST_ID --paths "/*" && \
-			echo "🔧 Restoring API paths..." && \
-			find frontend/js -name "*.js" -exec sed -i "s|'/dev'|'/prod'|g" {} \; && \
-			find frontend/js -name "*.js" -exec sed -i "s|/dev/|/prod/|g" {} \; && \
 			echo "" && \
 			echo "✅ Deployment complete!" && \
 			echo "" && \
@@ -97,10 +92,11 @@ deploy-prod: build-lambdas-prod build-frontend ## Deploy prod environment (backe
 		if [ "$$confirm" = "yes" ]; then \
 			terraform apply tfplan && rm -f tfplan && \
 			echo "" && \
-			echo "📦 Deploying frontend..." && \
+			echo "📦 Building and deploying frontend..." && \
 			cd ../../.. && \
+			cd frontend && npm run build && cd .. && \
 			BUCKET=$$(cd terraform/environments/prod && terraform output -raw static_bucket_name) && \
-			aws s3 sync frontend/ s3://$$BUCKET/ --delete --exclude "tests/*" && \
+			aws s3 sync frontend/dist/ s3://$$BUCKET/ --delete && \
 			DIST_ID=$$(cd terraform/environments/prod && terraform output -raw cloudfront_distribution_id) && \
 			aws cloudfront create-invalidation --distribution-id $$DIST_ID --paths "/*" && \
 			echo "✅ Deployment complete!"; \
@@ -186,10 +182,9 @@ test-backend-cov: ## Run backend tests with coverage report
 	@echo "📊 Coverage report: backend/htmlcov/index.html"
 	@echo ""
 
-test-frontend: ## Run frontend JavaScript tests
+test-frontend: install-frontend-deps ## Run frontend tests (Vitest)
 	@echo "🧪 Running frontend tests..."
-	@cd frontend && \
-		node --test tests/*.test.js
+	@cd frontend && npx vitest run
 	@echo ""
 
 lint-backend: ## Lint backend Python code
@@ -206,24 +201,20 @@ install-backend: ## Install backend dependencies
 	@cd backend && \
 		pip install -r requirements.txt
 
-deploy-frontend-dev: build-frontend ## Deploy frontend to dev S3
-	@echo "📦 Deploying frontend to DEV..."
-	@echo "🔧 Patching API paths for dev environment..."
-	@find frontend/js -name "*.js" -exec sed -i "s|'/prod'|'/dev'|g" {} \;
-	@find frontend/js -name "*.js" -exec sed -i "s|/prod/|/dev/|g" {} \;
-	@BUCKET=$$(cd terraform/environments/dev && terraform output -raw static_bucket_name) && \
-		aws s3 sync frontend/ s3://$$BUCKET/ --delete --exclude "tests/*" && \
+deploy-frontend-dev: install-frontend-deps ## Build and deploy frontend to dev S3
+	@echo "📦 Building and deploying frontend to DEV..."
+	@cd frontend && VITE_API_BASE=/dev npm run build && cd .. && \
+		BUCKET=$$(cd terraform/environments/dev && terraform output -raw static_bucket_name) && \
+		aws s3 sync frontend/dist/ s3://$$BUCKET/ --delete && \
 		DIST_ID=$$(cd terraform/environments/dev && terraform output -raw cloudfront_distribution_id) && \
 		aws cloudfront create-invalidation --distribution-id $$DIST_ID --paths "/*" && \
-		echo "🔧 Restoring API paths..." && \
-		find frontend/js -name "*.js" -exec sed -i "s|'/dev'|'/prod'|g" {} \; && \
-		find frontend/js -name "*.js" -exec sed -i "s|/dev/|/prod/|g" {} \; && \
 		echo "✅ Frontend deployed to dev"
 
-deploy-frontend-prod: build-frontend ## Deploy frontend to prod S3
-	@echo "📦 Deploying frontend to PROD..."
-	@BUCKET=$$(cd terraform/environments/prod && terraform output -raw static_bucket_name) && \
-		aws s3 sync frontend/ s3://$$BUCKET/ --delete --exclude "tests/*" && \
+deploy-frontend-prod: install-frontend-deps ## Build and deploy frontend to prod S3
+	@echo "📦 Building and deploying frontend to PROD..."
+	@cd frontend && npm run build && cd .. && \
+		BUCKET=$$(cd terraform/environments/prod && terraform output -raw static_bucket_name) && \
+		aws s3 sync frontend/dist/ s3://$$BUCKET/ --delete && \
 		DIST_ID=$$(cd terraform/environments/prod && terraform output -raw cloudfront_distribution_id) && \
 		aws cloudfront create-invalidation --distribution-id $$DIST_ID --paths "/*" && \
 		echo "✅ Frontend deployed to prod"

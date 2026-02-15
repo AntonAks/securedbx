@@ -58,9 +58,7 @@ const Header = (function() {
         return `
         <div class="${CONFIG.maxWidth} mx-auto px-6 py-6 flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-3">
-                <svg class="w-6 h-6 text-blue-600 dark:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                </svg>
+                <img src="img/logo.png" alt="sdbx logo" class="w-14 h-14">
                 <span class="text-xl font-semibold text-gray-900 dark:text-slate-100">sdbx</span>
             </a>
             <nav class="flex items-center gap-6">

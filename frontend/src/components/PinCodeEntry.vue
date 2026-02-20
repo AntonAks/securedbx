@@ -1,7 +1,7 @@
 <template>
   <div>
-    <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-6 text-center">Download Your File</h2>
-    <p class="text-gray-600 dark:text-slate-400 text-center mb-6">Enter your 6-digit code:</p>
+    <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-6 text-center">{{ $t('download.pin.title') }}</h2>
+    <p class="text-gray-600 dark:text-slate-400 text-center mb-6">{{ $t('download.pin.enterCode') }}</p>
 
     <div class="flex gap-2 sm:gap-3 justify-center mb-6" ref="boxContainer">
       <input
@@ -12,7 +12,7 @@
         maxlength="1"
         inputmode="numeric"
         pattern="[0-9]"
-        :aria-label="`Digit ${i + 1}`"
+        :aria-label="$t('download.pin.digitLabel', { n: i + 1 })"
         @input="onInput($event, i)"
         @keydown="onKeydown($event, i)"
         @paste="onPaste($event)"
@@ -20,14 +20,14 @@
     </div>
 
     <button class="btn-primary" :disabled="!isComplete || loading" @click="$emit('submit', code)">
-      {{ loading ? 'Verifying...' : 'Continue' }}
+      {{ loading ? $t('download.pin.verifying') : $t('download.pin.continue') }}
     </button>
 
     <div v-if="error" class="mt-4 p-3 bg-red-500/10 border border-red-500 rounded-lg text-red-600 dark:text-red-400 text-sm text-center">
       {{ error }}
     </div>
 
-    <p class="text-gray-400 dark:text-slate-500 text-xs text-center mt-4">The code looks like: 482973</p>
+    <p class="text-gray-400 dark:text-slate-500 text-xs text-center mt-4">{{ $t('download.pin.codeExample') }}</p>
   </div>
 </template>
 

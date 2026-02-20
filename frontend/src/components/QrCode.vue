@@ -3,7 +3,7 @@
     <canvas v-if="!error" ref="canvasRef"></canvas>
     <div v-else class="flex items-center justify-center text-center p-4" style="width: 256px; height: 256px;">
       <p class="text-gray-500 dark:text-slate-400 text-sm">
-        URL too long for QR code.<br>Use "Copy Link" instead.
+        {{ $t('share.qrTooLong') }}<br>{{ $t('share.qrUseLink') }}
       </p>
     </div>
   </div>

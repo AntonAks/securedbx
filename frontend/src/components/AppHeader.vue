@@ -10,23 +10,40 @@
           v-if="route.path !== '/'"
           to="/"
           class="text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200 transition"
-        >Home</router-link>
+        >{{ $t('nav.home') }}</router-link>
         <router-link
           to="/about"
           :class="route.path === '/about'
             ? 'text-sm text-blue-600 dark:text-blue-500'
             : 'text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200 transition'"
-        >About</router-link>
+        >{{ $t('nav.about') }}</router-link>
         <router-link
           to="/faq"
           :class="route.path === '/faq'
             ? 'text-sm text-blue-600 dark:text-blue-500'
             : 'text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200 transition'"
-        >FAQ</router-link>
+        >{{ $t('nav.faq') }}</router-link>
+
+        <!-- Language switcher -->
+        <div class="flex items-center gap-1">
+          <button
+            @click="switchLocale('en')"
+            :class="['text-xl leading-none transition-opacity', locale === 'en' ? 'opacity-100' : 'opacity-30 hover:opacity-60']"
+            :aria-label="$t('language.en')"
+            title="English"
+          >🇬🇧</button>
+          <button
+            @click="switchLocale('uk')"
+            :class="['text-xl leading-none transition-opacity', locale === 'uk' ? 'opacity-100' : 'opacity-30 hover:opacity-60']"
+            :aria-label="$t('language.uk')"
+            title="Українська"
+          >🇺🇦</button>
+        </div>
+
         <button
           @click="themeStore.toggle()"
           class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-800 transition-colors"
-          :aria-label="themeStore.isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+          :aria-label="themeStore.isDark ? $t('nav.switchToLight') : $t('nav.switchToDark')"
         >
           <!-- Sun icon (dark mode) -->
           <svg v-if="themeStore.isDark" class="w-5 h-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -46,15 +63,22 @@
 <script setup>
 import { inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useThemeStore } from '../stores/theme.js';
+import { setLocale } from '../i18n';
 
 const route = useRoute();
 const router = useRouter();
 const themeStore = useThemeStore();
 const triggerHomeReset = inject('triggerHomeReset');
+const { locale } = useI18n();
 
 function goHome() {
   triggerHomeReset();
   router.push('/');
+}
+
+function switchLocale(loc) {
+  setLocale(loc);
 }
 </script>

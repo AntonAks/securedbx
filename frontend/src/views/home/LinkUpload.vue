@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-6">Share Files</h2>
+    <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-6">{{ $t('upload.link.shareFiles') }}</h2>
 
     <DropZone v-if="selectedFiles.length === 0" @files="addFiles" />
     <FileList :files="selectedFiles" @remove="removeFile" @clear="clearFiles" />
@@ -8,7 +8,7 @@
     <TtlSelector ref="ttlRef" />
 
     <button class="btn-primary" :disabled="selectedFiles.length === 0 || upload.uploading.value" @click="handleUpload">
-      Encrypt & Upload
+      {{ $t('upload.link.encryptUpload') }}
     </button>
 
     <ProgressBar :visible="upload.uploading.value" :percent="upload.progress.value" :text="upload.progressText.value" />
@@ -18,6 +18,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import DropZone from '../../components/DropZone.vue';
 import FileList from '../../components/FileList.vue';
 import TtlSelector from '../../components/TtlSelector.vue';
@@ -26,6 +27,7 @@ import { useUpload } from '../../composables/useUpload.js';
 import { validateFiles, createBundle } from '../../lib/zip-bundle.js';
 import * as CryptoModule from '../../lib/crypto.js';
 
+const { t } = useI18n();
 const router = useRouter();
 const upload = useUpload();
 const ttlRef = ref(null);
@@ -60,9 +62,9 @@ async function handleUpload() {
         if (selectedFiles.value.length === 1) {
             fileToUpload = selectedFiles.value[0];
             uploadFileName = selectedFiles.value[0].name;
-            upload.updateProgress(0, 'Preparing file...');
+            upload.updateProgress(0, t('upload.progress.preparingFile'));
         } else {
-            upload.updateProgress(0, 'Creating ZIP bundle...');
+            upload.updateProgress(0, t('upload.progress.creatingZip'));
             const bundle = await createBundle(selectedFiles.value, (percent, message) => {
                 upload.updateProgress(percent * 0.15, message);
             });
@@ -70,23 +72,23 @@ async function handleUpload() {
             uploadFileName = bundle.filename;
         }
 
-        upload.updateProgress(15, 'Generating encryption key...');
+        upload.updateProgress(15, t('upload.progress.generatingKey'));
         const key = await CryptoModule.generateKey();
 
-        upload.updateProgress(20, 'Encrypting... 0%');
+        upload.updateProgress(20, t('upload.progress.encrypting', { percent: 0 }));
         const encryptedData = await CryptoModule.encryptFile(fileToUpload, key, (progress) => {
-            upload.updateProgress(20 + (progress * 0.3), `Encrypting... ${Math.round(progress)}%`);
+            upload.updateProgress(20 + (progress * 0.3), t('upload.progress.encrypting', { percent: Math.round(progress) }));
         });
 
-        upload.updateProgress(50, 'Initializing upload...');
+        upload.updateProgress(50, t('upload.progress.initializing'));
         const ttl = ttlRef.value.getTtl();
         const fileSize = fileToUpload.size || fileToUpload.byteLength;
         const data = await upload.initializeUpload({ file_size: fileSize, ttl });
 
-        upload.updateProgress(60, 'Uploading encrypted file...');
+        upload.updateProgress(60, t('upload.progress.uploadingEncrypted'));
         await upload.uploadToS3(data.upload_url, encryptedData);
 
-        upload.updateProgress(100, 'Upload complete! Redirecting...');
+        upload.updateProgress(100, t('upload.progress.completeRedirect'));
         const keyBase64 = await CryptoModule.keyToBase64(key);
         const encodedFileName = encodeURIComponent(uploadFileName);
 
@@ -95,7 +97,7 @@ async function handleUpload() {
         }, 500);
     } catch (error) {
         console.error('Upload error:', error);
-        alert(error.message || 'Upload failed. Please try again.');
+        alert(error.message || t('upload.progress.uploadFailed'));
         upload.uploading.value = false;
     }
 }

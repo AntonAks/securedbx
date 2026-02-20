@@ -2,10 +2,10 @@
   <div v-if="files.length > 0" class="bg-gray-100 dark:bg-slate-800/50 rounded-lg p-4 mb-6 max-h-48 overflow-y-auto">
     <div class="flex justify-between items-center mb-3">
       <span class="text-gray-900 dark:text-slate-100 font-medium">
-        Selected: {{ files.length }}/10 files
+        {{ $t('components.fileList.selected', { count: files.length }) }}
       </span>
       <span class="text-gray-600 dark:text-slate-400 text-sm">
-        Total: {{ formattedTotalSize }}
+        {{ $t('components.fileList.total', { size: formattedTotalSize }) }}
       </span>
     </div>
     <ul class="space-y-2">
@@ -13,7 +13,7 @@
         <span class="text-gray-700 dark:text-slate-300 truncate mr-2" :title="file.name">{{ file.name }}</span>
         <div class="flex items-center gap-3 flex-shrink-0">
           <span class="text-gray-500 dark:text-slate-500">{{ formatFileSize(file.size) }}</span>
-          <button type="button" class="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 p-1" @click="$emit('remove', index)" title="Remove file">
+          <button type="button" class="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 p-1" @click="$emit('remove', index)" :title="$t('components.fileList.removeFile')">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path d="M6 18L18 6M6 6l12 12"/>
             </svg>
@@ -22,7 +22,7 @@
       </li>
     </ul>
     <button type="button" class="mt-3 text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300" @click="$emit('clear')">
-      Clear All
+      {{ $t('components.fileList.clearAll') }}
     </button>
   </div>
 </template>

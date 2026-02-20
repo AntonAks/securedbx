@@ -3,10 +3,10 @@
     <!-- Error -->
     <section v-if="hasError" class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8">
       <div class="bg-red-500/10 border border-red-500 rounded-lg p-4 mb-6">
-        <h2 class="text-red-500 font-semibold text-xl mb-2">Invalid Share Link</h2>
-        <p class="text-gray-700 dark:text-slate-300">The share link is missing required information.</p>
+        <h2 class="text-red-500 font-semibold text-xl mb-2">{{ $t('share.invalidLink') }}</h2>
+        <p class="text-gray-700 dark:text-slate-300">{{ $t('share.invalidLinkMsg') }}</p>
       </div>
-      <router-link to="/" class="btn-primary block text-center">Go to Upload Page</router-link>
+      <router-link to="/" class="btn-primary block text-center">{{ $t('share.goToUpload') }}</router-link>
     </section>
 
     <!-- Share Section -->
@@ -18,24 +18,24 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100">Ready to Share!</h2>
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100">{{ $t('share.readyToShare') }}</h2>
         <p class="text-gray-600 dark:text-slate-400 mt-2" v-if="isVault">
           <span class="inline-flex items-center gap-2">
             <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
-            {{ fileName ? 'Your file has been stored in the vault.' : 'Your text has been stored in the vault.' }}
+            {{ fileName ? $t('share.vaultFileStored') : $t('share.vaultTextStored') }}
           </span>
         </p>
         <p v-else class="text-gray-600 dark:text-slate-400 mt-2">
-          {{ isTextSecret ? 'Your text secret has been encrypted and stored.' : 'Your file has been encrypted and uploaded.' }}
+          {{ isTextSecret ? $t('share.textEncrypted') : $t('share.fileEncrypted') }}
         </p>
       </div>
 
       <!-- QR Code -->
       <div class="flex flex-col items-center mb-8">
         <QrCode ref="qrRef" :value="downloadUrl" />
-        <p class="text-gray-500 dark:text-slate-400 text-sm mt-3">Scan to download</p>
+        <p class="text-gray-500 dark:text-slate-400 text-sm mt-3">{{ $t('share.scanToDownload') }}</p>
       </div>
 
       <!-- QR Action Buttons -->
@@ -44,24 +44,24 @@
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
-          {{ qrCopied ? 'Copied!' : 'Copy QR' }}
+          {{ qrCopied ? $t('share.copyQrDone') : $t('share.copyQr') }}
         </button>
         <button @click="handleDownloadQr" class="btn-secondary btn-auto flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
-          Download QR
+          {{ $t('share.downloadQr') }}
         </button>
       </div>
 
       <!-- Copy Link Section -->
       <div class="mb-8">
-        <p class="text-gray-700 dark:text-slate-300 text-sm mb-2">Or copy link:</p>
+        <p class="text-gray-700 dark:text-slate-300 text-sm mb-2">{{ $t('share.orCopyLink') }}</p>
         <div class="flex gap-2">
           <input type="text" :value="downloadUrl" readonly
             class="flex-1 px-4 py-3 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-200 font-mono text-sm focus:outline-none focus:border-blue-500">
           <button @click="handleCopyLink" class="btn-secondary btn-auto">
-            {{ linkCopied ? 'Copied!' : 'Copy' }}
+            {{ linkCopied ? $t('share.copyDone') : $t('share.copy') }}
           </button>
         </div>
       </div>
@@ -72,21 +72,21 @@
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
           </svg>
-          Upload Another
+          {{ $t('share.uploadAnother') }}
         </router-link>
       </div>
 
       <!-- Warning Section -->
       <div class="bg-yellow-500/10 border border-yellow-500 rounded-lg p-4 mb-6">
-        <p class="text-yellow-500 font-semibold mb-2">Warning:</p>
+        <p class="text-yellow-500 font-semibold mb-2">{{ $t('share.warning') }}</p>
         <ul class="text-gray-700 dark:text-slate-300 text-sm space-y-1 ml-5 list-disc">
           <li v-if="isVault">
-            <span class="text-blue-600 dark:text-blue-400 font-medium">Password-protected</span>
-            &bull; Can be accessed multiple times until expiry
+            <span class="text-blue-600 dark:text-blue-400 font-medium">{{ $t('share.passwordProtected') }}</span>
+            &bull; {{ $t('share.multiAccessUntilExpiry') }}
           </li>
           <template v-else>
-            <li>This link works only <strong class="text-gray-900 dark:text-white">ONCE</strong></li>
-            <li>{{ isTextSecret ? 'Text deleted after viewing or expiry' : 'File deleted after download or expiry' }}</li>
+            <li>{{ $t('share.linkWorksOnce') }}</li>
+            <li>{{ isTextSecret ? $t('share.textDeletedAfter') : $t('share.fileDeletedAfter') }}</li>
           </template>
         </ul>
       </div>
@@ -97,7 +97,7 @@
           <svg class="w-4 h-4 inline-block mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          Expires in: <span class="font-medium text-gray-700 dark:text-slate-300" :class="{ 'text-red-500': countdownText === 'Expired' }">{{ countdownText }}</span>
+          {{ $t('share.expiresIn') }} <span class="font-medium text-gray-700 dark:text-slate-300" :class="{ 'text-red-500': isExpired }">{{ countdownText }}</span>
         </p>
       </div>
     </section>
@@ -107,17 +107,20 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import QrCode from '../components/QrCode.vue';
 import { useClipboard } from '../composables/useClipboard.js';
 import { API_BASE } from '../lib/api.js';
 import { formatTimeRemaining } from '../lib/utils.js';
 
+const { t } = useI18n();
 const route = useRoute();
 const { copied: linkCopied, copy: copyLink } = useClipboard();
 
 const qrRef = ref(null);
 const qrCopied = ref(false);
 const countdownText = ref('');
+const isExpired = ref(false);
 let countdownInterval = null;
 
 const fileId = route.query.id || '';
@@ -175,7 +178,8 @@ function startCountdown(expiresAt) {
     const update = () => {
         const remaining = expiresAt - Math.floor(Date.now() / 1000);
         if (remaining <= 0) {
-            countdownText.value = 'Expired';
+            countdownText.value = t('share.expired');
+            isExpired.value = true;
             if (countdownInterval) clearInterval(countdownInterval);
             return;
         }
@@ -202,7 +206,7 @@ async function handleCopyQr() {
         setTimeout(() => { qrCopied.value = false; }, 2000);
     } catch (error) {
         console.warn('Copy QR failed:', error);
-        alert('Browser does not support copying images. Use "Download QR" instead.');
+        alert(t('share.copyQrFailed'));
     }
 }
 

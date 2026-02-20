@@ -6,10 +6,9 @@
 
     <!-- Info Section -->
     <section class="mt-12 text-center">
-      <h3 class="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-3">About sdbx</h3>
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-3">{{ $t('download.info.title') }}</h3>
       <p class="text-gray-500 dark:text-slate-400 text-sm leading-relaxed max-w-2xl mx-auto">
-        sdbx uses end-to-end encryption to protect your files.
-        Your encryption key never leaves your browser and the server never has access to your unencrypted files.
+        {{ $t('download.info.description') }}
       </p>
     </section>
   </main>

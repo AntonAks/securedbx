@@ -96,6 +96,7 @@ Thumbs.db
 *.backup
 
 .claude/*
+docs/*
 terraform/modules/api/builds/layer
 
 ARCHITECTURE.md

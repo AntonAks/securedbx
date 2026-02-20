@@ -4,7 +4,7 @@
     <section v-if="step === 'loading'" class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-12">
       <div class="flex flex-col items-center">
         <div class="w-12 h-12 border-4 border-gray-300 dark:border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-gray-600 dark:text-slate-300">Checking vault availability...</p>
+        <p class="text-gray-600 dark:text-slate-300">{{ $t('download.vault.checkingAvailability') }}</p>
       </div>
     </section>
 
@@ -16,21 +16,21 @@
             <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
         </div>
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">Password Required</h2>
-        <p class="text-gray-600 dark:text-slate-400">Enter the password to access this content</p>
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">{{ $t('download.vault.passwordRequired') }}</h2>
+        <p class="text-gray-600 dark:text-slate-400">{{ $t('download.vault.enterPassword') }}</p>
       </div>
 
       <div class="bg-gray-100 dark:bg-slate-800/50 rounded-lg p-4 mb-6 space-y-2">
         <p class="text-gray-600 dark:text-slate-300">
-          <strong class="text-gray-900 dark:text-slate-100">Size:</strong>
+          <strong class="text-gray-900 dark:text-slate-100">{{ $t('download.vault.size') }}</strong>
           <span class="text-gray-500 dark:text-slate-400 ml-1">{{ formattedSize }}</span>
         </p>
         <p class="text-gray-600 dark:text-slate-300">
-          <strong class="text-gray-900 dark:text-slate-100">Expires:</strong>
+          <strong class="text-gray-900 dark:text-slate-100">{{ $t('download.vault.expires') }}</strong>
           <span class="text-gray-500 dark:text-slate-400 ml-1">{{ expiresText }}</span>
         </p>
         <p class="text-gray-600 dark:text-slate-300">
-          <strong class="text-gray-900 dark:text-slate-100">Downloads:</strong>
+          <strong class="text-gray-900 dark:text-slate-100">{{ $t('download.vault.downloads') }}</strong>
           <span class="text-gray-500 dark:text-slate-400 ml-1">{{ downloadCount }}</span>
         </p>
       </div>
@@ -40,26 +40,26 @@
           <input
             :type="showPassword ? 'text' : 'password'"
             v-model="password"
-            placeholder="Enter password"
+            :placeholder="$t('download.vault.passwordPlaceholder')"
             class="flex-1 px-4 py-3 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
             @keypress.enter="handleVaultDownload"
           />
           <button type="button" @click="showPassword = !showPassword"
             class="px-3 py-3 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 border border-gray-300 dark:border-slate-700 rounded-lg">
-            {{ showPassword ? 'Hide' : 'Show' }}
+            {{ showPassword ? $t('download.vault.hide') : $t('download.vault.show') }}
           </button>
         </div>
       </div>
 
       <button class="btn-primary mb-4" :disabled="!password || isDownloading" @click="handleVaultDownload">
-        Unlock &amp; Download
+        {{ $t('download.vault.unlockDownload') }}
       </button>
 
       <ProgressBar :visible="isDownloading" :percent="progress" :text="progressText" />
 
       <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mt-4">
         <p class="text-blue-700 dark:text-blue-300 text-sm text-center">
-          You can access this multiple times until it expires
+          {{ $t('download.vault.multiAccessNote') }}
         </p>
       </div>
     </section>
@@ -71,21 +71,21 @@
           <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
-          Vault Text
+          {{ $t('download.vault.vaultText') }}
         </h2>
-        <p class="text-gray-500 dark:text-slate-400 text-sm">This password-protected text can be accessed multiple times until it expires.</p>
+        <p class="text-gray-500 dark:text-slate-400 text-sm">{{ $t('download.vault.vaultTextNote') }}</p>
       </div>
       <div class="mb-6">
         <textarea :value="decryptedText" readonly rows="10"
           class="w-full px-4 py-3 bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-200 font-mono text-sm mb-4 resize-vertical focus:outline-none focus:border-blue-500"></textarea>
-        <button @click="copyText" class="btn-secondary btn-auto">{{ textCopied ? 'Copied!' : 'Copy Text' }}</button>
+        <button @click="copyText" class="btn-secondary btn-auto">{{ textCopied ? $t('download.vault.textCopied') : $t('download.vault.copyText') }}</button>
       </div>
       <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-6">
         <p class="text-blue-700 dark:text-blue-300 text-sm text-center">
-          You can access this again with the same link and password
+          {{ $t('download.vault.accessAgain') }}
         </p>
       </div>
-      <router-link to="/" class="btn-primary block text-center">Share Another Secret</router-link>
+      <router-link to="/" class="btn-primary block text-center">{{ $t('download.vault.shareAnotherSecret') }}</router-link>
     </section>
 
     <!-- Vault File Success -->
@@ -95,25 +95,25 @@
           <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
-          Download Complete
+          {{ $t('download.vault.downloadComplete') }}
         </h2>
-        <p class="text-gray-700 dark:text-slate-300 mb-2">Your file has been decrypted and saved.</p>
+        <p class="text-gray-700 dark:text-slate-300 mb-2">{{ $t('download.vault.fileDecrypted') }}</p>
       </div>
       <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-6">
         <p class="text-blue-700 dark:text-blue-300 text-sm text-center">
-          You can download this file again with the same link and password until it expires
+          {{ $t('download.vault.downloadAgain') }}
         </p>
       </div>
-      <router-link to="/" class="btn-primary block text-center">Share Another File</router-link>
+      <router-link to="/" class="btn-primary block text-center">{{ $t('download.vault.shareAnotherFile') }}</router-link>
     </section>
 
     <!-- Error -->
     <section v-if="step === 'error'" class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8">
       <div class="bg-red-500/10 border border-red-500 rounded-lg p-4 mb-6">
-        <h2 class="text-red-500 font-semibold text-xl mb-2">Unable to Download</h2>
+        <h2 class="text-red-500 font-semibold text-xl mb-2">{{ $t('download.vault.unableToDownload') }}</h2>
         <p class="text-gray-700 dark:text-slate-300">{{ errorMessage }}</p>
       </div>
-      <router-link to="/" class="btn-outline block text-center">Share a New File</router-link>
+      <router-link to="/" class="btn-outline block text-center">{{ $t('download.vault.shareNewFile') }}</router-link>
     </section>
   </div>
 </template>
@@ -121,6 +121,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import ProgressBar from '../../components/ProgressBar.vue';
 import { useRecaptcha } from '../../composables/useRecaptcha.js';
 import { useClipboard } from '../../composables/useClipboard.js';
@@ -128,6 +129,7 @@ import { API_BASE } from '../../lib/api.js';
 import { formatFileSize, formatTimeRemaining, getCurrentTimestamp } from '../../lib/utils.js';
 import * as CryptoModule from '../../lib/crypto.js';
 
+const { t } = useI18n();
 const route = useRoute();
 const { getToken } = useRecaptcha();
 const { copied: textCopied, copy } = useClipboard();
@@ -157,14 +159,14 @@ onMounted(async () => {
         fileName = route.query.name ? decodeURIComponent(route.query.name) : '';
 
         if (!fileId || !vaultSalt) {
-            showError('Invalid vault link');
+            showError(t('download.vault.invalidVaultLink'));
             return;
         }
 
         await checkVaultAvailability();
     } catch (error) {
         console.error('Vault initialization error:', error);
-        showError('Failed to load vault information');
+        showError(t('download.vault.failedToLoad'));
     }
 });
 
@@ -176,12 +178,12 @@ async function checkVaultAvailability() {
     try {
         const response = await fetch(`${API_BASE}/files/${fileId}/metadata`);
 
-        if (response.status === 404) { showError('Vault content not found'); return; }
-        if (response.status === 410) { showError('Vault content has expired'); return; }
+        if (response.status === 404) { showError(t('download.vault.vaultNotFound')); return; }
+        if (response.status === 410) { showError(t('download.vault.vaultExpired')); return; }
         if (!response.ok) throw new Error(`API error: ${response.status}`);
 
         const metadata = await response.json();
-        if (!metadata.available) { showError('Vault content is no longer available'); return; }
+        if (!metadata.available) { showError(t('download.vault.vaultUnavailable')); return; }
 
         vaultMetadata = metadata;
         formattedSize.value = formatFileSize(metadata.file_size);
@@ -190,7 +192,7 @@ async function checkVaultAvailability() {
         step.value = 'password';
     } catch (error) {
         console.error('Error checking vault availability:', error);
-        showError('Failed to check vault availability');
+        showError(t('download.vault.failedToCheck'));
     }
 }
 
@@ -198,9 +200,9 @@ function startExpirationCountdown(expiresAt) {
     const update = () => {
         const remaining = expiresAt - getCurrentTimestamp();
         if (remaining <= 0) {
-            expiresText.value = 'Expired';
+            expiresText.value = t('download.vault.vaultExpired');
             clearInterval(countdownInterval);
-            showError('Vault content has expired');
+            showError(t('download.vault.vaultExpired'));
             return;
         }
         expiresText.value = formatTimeRemaining(remaining);
@@ -211,7 +213,7 @@ function startExpirationCountdown(expiresAt) {
 
 async function handleVaultDownload() {
     if (!password.value) {
-        alert('Please enter the password');
+        alert(t('download.vault.enterPasswordAlert'));
         return;
     }
 
@@ -219,12 +221,12 @@ async function handleVaultDownload() {
         isDownloading.value = true;
 
         progress.value = 5;
-        progressText.value = 'Verifying password...';
+        progressText.value = t('download.progress.verifyingPassword');
         const salt = CryptoModule.base64ToArray(vaultSalt);
         const passwordKey = await CryptoModule.deriveKeyFromPassword(password.value, salt);
 
         progress.value = 15;
-        progressText.value = 'Unlocking content...';
+        progressText.value = t('download.progress.unlockingContent');
         const encryptedKeyData = CryptoModule.base64ToArray(vaultMetadata.encrypted_key);
 
         let dataKey;
@@ -232,13 +234,13 @@ async function handleVaultDownload() {
             dataKey = await CryptoModule.decryptKey(encryptedKeyData, passwordKey);
         } catch (error) {
             console.error('Key decryption failed:', error);
-            alert('Incorrect password');
+            alert(t('download.vault.incorrectPassword'));
             resetForm();
             return;
         }
 
         progress.value = 25;
-        progressText.value = 'Preparing download...';
+        progressText.value = t('download.progress.preparingDownload');
 
         const recaptchaToken = await getToken('download');
         const response = await fetch(`${API_BASE}/files/${fileId}/download`, {
@@ -256,44 +258,44 @@ async function handleVaultDownload() {
 
         if (downloadData.content_type === 'text') {
             progress.value = 40;
-            progressText.value = 'Decrypting text...';
+            progressText.value = t('download.progress.decryptingText');
             const encryptedBytes = CryptoModule.base64ToArray(downloadData.encrypted_text);
 
             const decryptedData = await CryptoModule.decryptFile(encryptedBytes, dataKey, (p) => {
                 progress.value = 40 + p * 0.5;
-                progressText.value = `Decrypting... ${Math.round(p)}%`;
+                progressText.value = t('download.progress.decrypting', { percent: Math.round(p) });
             });
 
             progress.value = 100;
-            progressText.value = 'Complete!';
+            progressText.value = t('download.progress.complete');
             decryptedText.value = new TextDecoder().decode(decryptedData);
             step.value = 'text-result';
         } else {
             progress.value = 30;
-            progressText.value = 'Downloading encrypted file...';
+            progressText.value = t('download.progress.downloadingFile');
             const encryptedData = await downloadFromS3(downloadData.download_url);
 
             progress.value = 60;
-            progressText.value = 'Decrypting file...';
+            progressText.value = t('download.progress.decryptingFile', { percent: 0 });
             const decryptedData = await CryptoModule.decryptFile(encryptedData, dataKey, (p) => {
                 progress.value = 60 + p * 0.35;
-                progressText.value = `Decrypting... ${Math.round(p)}%`;
+                progressText.value = t('download.progress.decrypting', { percent: Math.round(p) });
             });
 
             progress.value = 95;
-            progressText.value = 'Saving file...';
+            progressText.value = t('download.progress.savingFile');
             saveFile(decryptedData, fileName || 'downloaded-file');
 
             progress.value = 100;
-            progressText.value = 'Download complete!';
+            progressText.value = t('download.progress.downloadComplete');
             step.value = 'file-success';
         }
     } catch (error) {
         console.error('Vault download error:', error);
         if (error.name === 'OperationError') {
-            alert('Incorrect password or corrupted data');
+            alert(t('download.vault.incorrectOrCorrupt'));
         } else {
-            alert(error.message || 'Download failed. Please try again.');
+            alert(error.message || t('download.link.downloadFailed'));
         }
         resetForm();
     }
@@ -308,7 +310,7 @@ function downloadFromS3(url) {
             if (event.lengthComputable) {
                 const pct = (event.loaded / event.total) * 100;
                 progress.value = 30 + pct * 0.3;
-                progressText.value = `Downloading... ${pct.toFixed(1)}%`;
+                progressText.value = t('download.progress.downloading', { percent: pct.toFixed(1) });
             }
         };
 

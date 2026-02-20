@@ -1,18 +1,18 @@
 <template>
   <div>
-    <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-2">Secure Vault</h2>
-    <p class="text-gray-600 dark:text-slate-400 mb-6">Password-protected, multi-access sharing</p>
+    <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-2">{{ $t('upload.vault.title') }}</h2>
+    <p class="text-gray-600 dark:text-slate-400 mb-6">{{ $t('upload.vault.subtitle') }}</p>
 
     <!-- Content Type Toggle -->
     <div class="flex justify-center mb-6">
       <div class="inline-flex rounded-lg bg-gray-200 dark:bg-slate-800 p-1">
         <label class="cursor-pointer">
           <input type="radio" value="file" v-model="contentType" class="sr-only peer">
-          <span class="px-4 py-2 rounded-lg text-sm font-medium peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:shadow text-gray-600 dark:text-slate-400 peer-checked:text-gray-900 dark:peer-checked:text-slate-100 transition-all">File</span>
+          <span class="px-4 py-2 rounded-lg text-sm font-medium peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:shadow text-gray-600 dark:text-slate-400 peer-checked:text-gray-900 dark:peer-checked:text-slate-100 transition-all">{{ $t('upload.vault.file') }}</span>
         </label>
         <label class="cursor-pointer">
           <input type="radio" value="text" v-model="contentType" class="sr-only peer">
-          <span class="px-4 py-2 rounded-lg text-sm font-medium peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:shadow text-gray-600 dark:text-slate-400 peer-checked:text-gray-900 dark:peer-checked:text-slate-100 transition-all">Text</span>
+          <span class="px-4 py-2 rounded-lg text-sm font-medium peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:shadow text-gray-600 dark:text-slate-400 peer-checked:text-gray-900 dark:peer-checked:text-slate-100 transition-all">{{ $t('upload.vault.text') }}</span>
         </label>
       </div>
     </div>
@@ -25,24 +25,24 @@
 
     <!-- Text Section -->
     <div v-else class="mb-6">
-      <textarea v-model="textInput" placeholder="Enter your secret text..." rows="6" maxlength="10000"
+      <textarea v-model="textInput" :placeholder="$t('upload.vault.textPlaceholder')" rows="6" maxlength="10000"
         class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-200 resize-vertical focus:outline-none focus:border-blue-500 mb-2"></textarea>
-      <p class="text-gray-600 dark:text-slate-400 text-sm text-right">{{ textInput.length.toLocaleString() }} / 10,000 characters</p>
+      <p class="text-gray-600 dark:text-slate-400 text-sm text-right">{{ $t('upload.vault.textCharCount', { count: textInput.length.toLocaleString() }) }}</p>
     </div>
 
     <!-- Password -->
     <div class="mb-6">
       <label class="block text-gray-700 dark:text-slate-300 font-medium mb-2">
-        Password <span class="text-red-500">*</span>
+        {{ $t('upload.vault.password') }} <span class="text-red-500">*</span>
       </label>
       <div class="flex items-center gap-2">
-        <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Enter a strong password"
+        <input :type="showPassword ? 'text' : 'password'" v-model="password" :placeholder="$t('upload.vault.passwordPlaceholder')"
           class="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded text-gray-900 dark:text-slate-200 focus:outline-none focus:border-blue-500">
         <button type="button" @click="showPassword = !showPassword" class="px-3 py-2 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 text-sm border border-gray-300 dark:border-slate-600 rounded">
-          {{ showPassword ? 'Hide' : 'Show' }}
+          {{ showPassword ? $t('upload.vault.hide') : $t('upload.vault.show') }}
         </button>
       </div>
-      <p class="text-gray-500 dark:text-slate-500 text-sm mt-1">Share password separately from the link</p>
+      <p class="text-gray-500 dark:text-slate-500 text-sm mt-1">{{ $t('upload.vault.passwordHint') }}</p>
     </div>
 
     <TtlSelector ref="ttlRef" />
@@ -51,7 +51,7 @@
       <svg class="inline w-4 h-4 mr-2 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
       </svg>
-      Encrypt & Store in Vault
+      {{ $t('upload.vault.encryptStore') }}
     </button>
 
     <ProgressBar :visible="upload.uploading.value" :percent="upload.progress.value" :text="upload.progressText.value" />
@@ -61,6 +61,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import DropZone from '../../components/DropZone.vue';
 import FileList from '../../components/FileList.vue';
 import TtlSelector from '../../components/TtlSelector.vue';
@@ -71,6 +72,7 @@ import { validateFiles, createBundle } from '../../lib/zip-bundle.js';
 import { API_BASE } from '../../lib/api.js';
 import * as CryptoModule from '../../lib/crypto.js';
 
+const { t } = useI18n();
 const router = useRouter();
 const upload = useUpload();
 const { getToken } = useRecaptcha();
@@ -109,9 +111,9 @@ async function handleUpload() {
             if (selectedFiles.value.length === 1) {
                 fileToUpload = selectedFiles.value[0];
                 uploadFileName = selectedFiles.value[0].name;
-                upload.updateProgress(0, 'Preparing file...');
+                upload.updateProgress(0, t('upload.progress.preparingFile'));
             } else {
-                upload.updateProgress(0, 'Creating ZIP bundle...');
+                upload.updateProgress(0, t('upload.progress.creatingZip'));
                 const bundle = await createBundle(selectedFiles.value, (p, msg) => upload.updateProgress(p * 0.05, msg));
                 fileToUpload = bundle.blob;
                 uploadFileName = bundle.filename;
@@ -121,29 +123,29 @@ async function handleUpload() {
             uploadFileName = null;
         }
 
-        upload.updateProgress(5, 'Generating encryption key...');
+        upload.updateProgress(5, t('upload.progress.generatingKey'));
         const dataKey = await CryptoModule.generateKey();
 
-        upload.updateProgress(10, 'Deriving password key...');
+        upload.updateProgress(10, t('upload.progress.derivingPasswordKey'));
         const salt = CryptoModule.generateSalt();
         const passwordKey = await CryptoModule.deriveKeyFromPassword(password.value, salt);
 
-        upload.updateProgress(15, 'Securing encryption key...');
+        upload.updateProgress(15, t('upload.progress.securingKey'));
         const encryptedKeyData = await CryptoModule.encryptKey(dataKey, passwordKey);
         const encryptedKeyBase64 = CryptoModule.arrayToBase64(encryptedKeyData);
         const saltBase64 = CryptoModule.arrayToBase64(salt);
 
-        upload.updateProgress(20, 'Encrypting content...');
+        upload.updateProgress(20, t('upload.progress.encryptingContent'));
         let encryptedData;
         if (contentType.value === 'file') {
             encryptedData = await CryptoModule.encryptFile(fileToUpload, dataKey, (p) => {
-                upload.updateProgress(20 + p * 0.3, `Encrypting... ${Math.round(p)}%`);
+                upload.updateProgress(20 + p * 0.3, t('upload.progress.encrypting', { percent: Math.round(p) }));
             });
         } else {
             encryptedData = await CryptoModule.encrypt(fileToUpload, dataKey);
         }
 
-        upload.updateProgress(50, 'Initializing vault...');
+        upload.updateProgress(50, t('upload.progress.initializingVault'));
         const ttl = ttlRef.value.getTtl();
         const recaptchaToken = await getToken('vault');
 
@@ -176,11 +178,11 @@ async function handleUpload() {
         const data = await response.json();
 
         if (contentType.value === 'file') {
-            upload.updateProgress(60, 'Uploading encrypted file...');
+            upload.updateProgress(60, t('upload.progress.uploadingEncrypted'));
             await upload.uploadToS3(data.upload_url, encryptedData);
         }
 
-        upload.updateProgress(100, 'Complete! Redirecting...');
+        upload.updateProgress(100, t('upload.progress.completeRedirect'));
 
         const encodedFileName = uploadFileName ? encodeURIComponent(uploadFileName) : '';
         setTimeout(() => {
@@ -188,7 +190,7 @@ async function handleUpload() {
         }, 500);
     } catch (error) {
         console.error('Vault upload error:', error);
-        alert(error.message || 'Upload failed. Please try again.');
+        alert(error.message || t('upload.progress.uploadFailed'));
         upload.uploading.value = false;
     }
 }

@@ -273,7 +273,7 @@ make build-frontend
 ### Project Structure
 
 ```
-sdbx/
+securedbx/
 ├── backend/
 │   ├── lambdas/           # 10 Lambda functions
 │   │   ├── upload_init/
@@ -336,7 +336,7 @@ sdbx/
 
 ## Testing
 
-sdbx has a comprehensive test suite with **300+ tests** and **ZERO mocks**:
+securedbx has a comprehensive test suite with **300+ tests** and **ZERO mocks**:
 
 ```bash
 # Run all tests (backend + frontend)
@@ -447,7 +447,7 @@ MIT License - See [LICENSE](./LICENSE) file for details
 
 ## Disclaimer
 
-This service is provided as-is. While we implement strong encryption and security practices, users are responsible for their own data. Do not use sdbx for illegal content.
+This service is provided as-is. While we implement strong encryption and security practices, users are responsible for their own data. Do not use securedbx for illegal content.
 
 For sensitive files, we recommend additional security measures like password-protecting archives before upload.
 
@@ -467,6 +467,6 @@ Special thanks to:
 
 **Questions or Issues?**
 
-- 🐛 [Report a Bug](https://github.com/antonaks/sdbx/issues)
-- 💡 [Request a Feature](https://github.com/antonaks/sdbx/issues)
+- 🐛 [Report a Bug](https://github.com/antonaks/securedbx/issues)
+- 💡 [Request a Feature](https://github.com/antonaks/securedbx/issues)
 - 🔒 [Report Security Issue](./SECURITY.md)

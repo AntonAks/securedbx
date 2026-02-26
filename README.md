@@ -1,6 +1,6 @@
 # SecureDBX
 
-> Zero-knowledge file and text sharing service with end-to-end encryption and one-time access
+> Share files and secrets that self-destruct. End-to-end encrypted, zero-knowledge, no account needed.
 
 **Everything is encrypted on your device. The server never has access to your data.**
 

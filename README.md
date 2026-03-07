@@ -405,7 +405,7 @@ Planned features for sdbx:
 - ✅ **Custom Expiration Times** - Precise expiration (5 min - 7 days) with real-time preview
 - ✅ **Vault (Password Protection)** - Password-protected multi-access sharing with PBKDF2 key derivation
 - ✅ **PIN Code Sharing** - Share via numeric PIN with PBKDF2 key derivation and configurable access mode
-- 📋 **Short URLs** - Shorter file IDs for cleaner links
+- ✅ **Short URLs** - Shorter file IDs for cleaner links
 - 📋 **IP/Geo Restriction** - Restrict downloads by country or IP
 - 📋 **Self-destructing Voice Message** - Encrypted audio messages
 - 📋 **Dead Man's Switch** - Auto-share if user doesn't check in

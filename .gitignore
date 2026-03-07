@@ -97,6 +97,8 @@ Thumbs.db
 
 .claude/*
 docs/*
+!docs/plans/
+!docs/plans/**
 terraform/modules/api/builds/layer
 
 ARCHITECTURE.md

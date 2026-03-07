@@ -12,7 +12,7 @@ from shared.exceptions import ValidationError
 
 
 class TestValidateFileId:
-    """Test file ID validation (UUID v4 format)."""
+    """Test file ID validation (UUID v4 or 8-char short ID format)."""
 
     def test_valid_uuid_v4(self):
         """Should accept valid UUID v4."""
@@ -34,6 +34,18 @@ class TestValidateFileId:
         """Should accept mixed case UUID v4."""
         validate_file_id("550e8400-E29B-41d4-A716-446655440000")
 
+    def test_valid_short_file_id(self):
+        """Should accept 8-char URL-safe short IDs."""
+        valid_short_ids = [
+            "zbWDqsjS",
+            "dX9a_kQm",
+            "Ab1-Cd2E",
+            "12345678",
+            "AAAAAAAA",
+        ]
+        for file_id in valid_short_ids:
+            validate_file_id(file_id)  # Should not raise
+
     def test_none_file_id(self):
         """Should reject None."""
         with pytest.raises(ValidationError, match="File ID is required"):
@@ -45,13 +57,14 @@ class TestValidateFileId:
             validate_file_id("")
 
     def test_invalid_format(self):
-        """Should reject non-UUID format."""
+        """Should reject invalid formats."""
         invalid_ids = [
-            "not-a-uuid",
-            "12345678",
-            "550e8400-e29b-41d4-a716",  # Too short
+            "not-a-uuid",           # 10 chars with invalid structure
+            "550e8400-e29b-41d4-a716",  # Too short for UUID
             "550e8400-e29b-41d4-a716-446655440000-extra",  # Too long
-            "550e8400_e29b_41d4_a716_446655440000",  # Wrong separator
+            "1234567",              # 7 chars — too short for short ID
+            "123456789",            # 9 chars — too long for short ID
+            "!@#$%^&*",            # 8 chars but invalid chars
         ]
 
         for file_id in invalid_ids:

@@ -13,8 +13,11 @@ from .constants import (
 )
 from .exceptions import ValidationError
 
-# UUID pattern for file ID validation
+# UUID pattern for file ID validation (legacy)
 UUID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+
+# Short file ID pattern: exactly 8 URL-safe base64 characters
+SHORT_FILE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{8}$")
 
 # PIN pattern: exactly 4 alphanumeric characters
 PIN_PATTERN = re.compile(r"^[a-zA-Z0-9]{4}$")
@@ -25,7 +28,7 @@ PIN_FILE_ID_PATTERN = re.compile(r"^[0-9]{6}$")
 
 def validate_file_id(file_id: str) -> None:
     """
-    Validate file ID format (UUID v4).
+    Validate file ID format (UUID v4 or 8-char URL-safe short ID).
 
     Args:
         file_id: File ID to validate
@@ -36,7 +39,7 @@ def validate_file_id(file_id: str) -> None:
     if not file_id:
         raise ValidationError("File ID is required")
 
-    if not UUID_PATTERN.match(file_id.lower()):
+    if not (UUID_PATTERN.match(file_id.lower()) or SHORT_FILE_ID_PATTERN.match(file_id)):
         raise ValidationError("Invalid file ID format")
 
 

@@ -1,7 +1,7 @@
 """Unit tests for PIN utility functions - NO MOCKS."""
 
 import pytest
-from shared.pin_utils import generate_pin_file_id, generate_salt, hash_pin, verify_pin_hash
+from shared.pin_utils import generate_pin_file_id, generate_salt, generate_short_file_id, hash_pin, verify_pin_hash
 
 
 class TestGenerateSalt:
@@ -81,3 +81,19 @@ class TestGeneratePinFileId:
         for _ in range(100):
             file_id = generate_pin_file_id()
             assert 0 <= int(file_id) <= 999999
+
+
+class TestGenerateShortFileId:
+    def test_length_is_eight(self):
+        file_id = generate_short_file_id()
+        assert len(file_id) == 8
+
+    def test_url_safe_chars(self):
+        import re
+        for _ in range(100):
+            file_id = generate_short_file_id()
+            assert re.match(r'^[A-Za-z0-9_-]+$', file_id), f"Invalid chars in: {file_id}"
+
+    def test_uniqueness(self):
+        ids = {generate_short_file_id() for _ in range(200)}
+        assert len(ids) == 200

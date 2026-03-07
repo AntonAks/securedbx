@@ -3,7 +3,6 @@
 import logging
 import os
 import time
-import uuid
 from typing import Any
 
 from shared.constants import (
@@ -12,7 +11,7 @@ from shared.constants import (
     TTL_TO_SECONDS,
     UPLOAD_URL_EXPIRY_SECONDS,
 )
-from shared.dynamo import create_file_record
+from shared.dynamo import create_file_record, generate_unique_file_id
 from shared.exceptions import ValidationError
 from shared.request_helpers import get_source_ip, parse_json_body
 from shared.response import error_response, success_response
@@ -123,9 +122,6 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             validate_salt(salt)
             validate_encrypted_key(encrypted_key)
 
-        # Generate unique ID
-        file_id = str(uuid.uuid4())
-
         # Calculate expiration timestamp
         ttl_seconds = ttl_to_seconds(ttl)
         expires_at = int(time.time()) + ttl_seconds
@@ -134,20 +130,19 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         source_ip = get_source_ip(event)
         ip_hash = hash_ip_secure(source_ip)
 
+        # Generate a unique short file ID
+        file_id = generate_unique_file_id(TABLE_NAME)
+
         # Handle based on content type
         if content_type == "text":
-            # Text secret
             encrypted_text = body.get("encrypted_text")
             if not encrypted_text:
                 raise ValidationError("encrypted_text is required for text secrets")
 
-            # Validate text length (base64 encoded)
-            # For vault, allow larger text (10000 chars)
             max_text_size = 100000 if access_mode == ACCESS_MODE_MULTI else 10000
             if len(encrypted_text) > max_text_size:
                 raise ValidationError("Text secret too large")
 
-            # Create DynamoDB record with encrypted text
             create_file_record(
                 table_name=TABLE_NAME,
                 file_id=file_id,
@@ -169,13 +164,11 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             })
 
         else:
-            # File upload (default)
             file_size = body.get("file_size")
             validate_file_size(file_size)
 
             s3_key = f"files/{file_id}"
 
-            # Create DynamoDB record
             create_file_record(
                 table_name=TABLE_NAME,
                 file_id=file_id,
@@ -189,7 +182,6 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 encrypted_key=encrypted_key,
             )
 
-            # Generate presigned upload URL
             upload_url = generate_upload_url(
                 bucket_name=BUCKET_NAME,
                 s3_key=s3_key,
@@ -207,6 +199,10 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     except ValidationError as e:
         logger.warning(f"Validation error: {e}")
         return error_response(str(e), 400)
+
+    except RuntimeError as e:
+        logger.error(str(e))
+        return error_response("Failed to generate unique file ID. Please try again.", 500)
 
     except Exception as e:
         logger.exception("Unexpected error in upload_init")

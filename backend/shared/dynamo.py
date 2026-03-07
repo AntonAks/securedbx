@@ -8,6 +8,7 @@ from typing import Any, Optional
 import boto3
 from botocore.exceptions import ClientError
 
+from .pin_utils import generate_short_file_id
 from .constants import (
     ACCESS_MODE_MULTI,
     ACCESS_MODE_ONE_TIME,
@@ -56,7 +57,7 @@ def create_file_record(
 
     Args:
         table_name: DynamoDB table name
-        file_id: Unique file/secret ID (UUID)
+        file_id: Unique file/secret ID (8-char URL-safe string)
         file_size: File size in bytes (or encrypted text size)
         expires_at: Unix timestamp when secret expires
         ip_hash: SHA256 hash of uploader IP
@@ -104,7 +105,12 @@ def create_file_record(
         record["encrypted_key"] = encrypted_key
         record["download_count"] = 0
 
-    table.put_item(Item=record)
+    try:
+        table.put_item(Item=record, ConditionExpression="attribute_not_exists(file_id)")
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            raise ValueError(f"File ID {file_id} already exists")
+        raise
     logger.info(f"Created {content_type} record ({access_mode}): {file_id}")
 
     return record
@@ -129,6 +135,21 @@ def get_file_record(table_name: str, file_id: str) -> Optional[dict[str, Any]]:
     except ClientError as e:
         logger.error(f"Error getting file record {file_id}: {e}")
         return None
+
+
+def generate_unique_file_id(table_name: str, max_retries: int = 10) -> str:
+    """
+    Generate a short file ID that does not already exist in DynamoDB.
+
+    Raises:
+        RuntimeError: If a unique ID cannot be found within max_retries attempts
+    """
+    for attempt in range(max_retries):
+        candidate = generate_short_file_id()
+        if get_file_record(table_name, candidate) is None:
+            return candidate
+        logger.warning(f"Short file ID collision: {candidate} (attempt {attempt + 1})")
+    raise RuntimeError("Failed to generate unique file ID after max retries")
 
 
 def reserve_download(table_name: str, file_id: str) -> dict[str, Any]:

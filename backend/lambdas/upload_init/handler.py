@@ -11,9 +11,8 @@ from shared.constants import (
     TTL_TO_SECONDS,
     UPLOAD_URL_EXPIRY_SECONDS,
 )
-from shared.dynamo import create_file_record
+from shared.dynamo import create_file_record, generate_unique_file_id
 from shared.exceptions import ValidationError
-from shared.pin_utils import generate_short_file_id
 from shared.request_helpers import get_source_ip, parse_json_body
 from shared.response import error_response, success_response
 from shared.s3 import generate_upload_url
@@ -28,8 +27,6 @@ from shared.validation import (
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-MAX_ID_RETRIES = 10
 
 # Environment variables
 BUCKET_NAME = os.environ.get("BUCKET_NAME")
@@ -133,84 +130,79 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         source_ip = get_source_ip(event)
         ip_hash = hash_ip_secure(source_ip)
 
-        # Generate unique short ID with retry loop
-        for attempt in range(MAX_ID_RETRIES):
-            candidate_id = generate_short_file_id()
-            try:
-                if content_type == "text":
-                    encrypted_text = body.get("encrypted_text")
-                    if not encrypted_text:
-                        raise ValidationError("encrypted_text is required for text secrets")
+        # Generate a unique short file ID
+        file_id = generate_unique_file_id(TABLE_NAME)
 
-                    max_text_size = 100000 if access_mode == ACCESS_MODE_MULTI else 10000
-                    if len(encrypted_text) > max_text_size:
-                        raise ValidationError("Text secret too large")
+        # Handle based on content type
+        if content_type == "text":
+            encrypted_text = body.get("encrypted_text")
+            if not encrypted_text:
+                raise ValidationError("encrypted_text is required for text secrets")
 
-                    create_file_record(
-                        table_name=TABLE_NAME,
-                        file_id=candidate_id,
-                        file_size=len(encrypted_text),
-                        expires_at=expires_at,
-                        ip_hash=ip_hash,
-                        content_type="text",
-                        encrypted_text=encrypted_text,
-                        access_mode=access_mode,
-                        salt=salt,
-                        encrypted_key=encrypted_key,
-                    )
+            max_text_size = 100000 if access_mode == ACCESS_MODE_MULTI else 10000
+            if len(encrypted_text) > max_text_size:
+                raise ValidationError("Text secret too large")
 
-                    logger.info(f"Text secret created: file_id={candidate_id}, size={len(encrypted_text)}, ttl={ttl}, access_mode={access_mode}")
+            create_file_record(
+                table_name=TABLE_NAME,
+                file_id=file_id,
+                file_size=len(encrypted_text),
+                expires_at=expires_at,
+                ip_hash=ip_hash,
+                content_type="text",
+                encrypted_text=encrypted_text,
+                access_mode=access_mode,
+                salt=salt,
+                encrypted_key=encrypted_key,
+            )
 
-                    return success_response({
-                        "file_id": candidate_id,
-                        "expires_at": expires_at,
-                    })
+            logger.info(f"Text secret created: file_id={file_id}, size={len(encrypted_text)}, ttl={ttl}, access_mode={access_mode}")
 
-                else:
-                    file_size = body.get("file_size")
-                    validate_file_size(file_size)
+            return success_response({
+                "file_id": file_id,
+                "expires_at": expires_at,
+            })
 
-                    s3_key = f"files/{candidate_id}"
+        else:
+            file_size = body.get("file_size")
+            validate_file_size(file_size)
 
-                    create_file_record(
-                        table_name=TABLE_NAME,
-                        file_id=candidate_id,
-                        file_size=file_size,
-                        expires_at=expires_at,
-                        ip_hash=ip_hash,
-                        content_type="file",
-                        s3_key=s3_key,
-                        access_mode=access_mode,
-                        salt=salt,
-                        encrypted_key=encrypted_key,
-                    )
+            s3_key = f"files/{file_id}"
 
-                    upload_url = generate_upload_url(
-                        bucket_name=BUCKET_NAME,
-                        s3_key=s3_key,
-                        expires_in=UPLOAD_URL_EXPIRY_SECONDS,
-                    )
+            create_file_record(
+                table_name=TABLE_NAME,
+                file_id=file_id,
+                file_size=file_size,
+                expires_at=expires_at,
+                ip_hash=ip_hash,
+                content_type="file",
+                s3_key=s3_key,
+                access_mode=access_mode,
+                salt=salt,
+                encrypted_key=encrypted_key,
+            )
 
-                    logger.info(f"File upload initialized: file_id={candidate_id}, size={file_size}, ttl={ttl}, access_mode={access_mode}")
+            upload_url = generate_upload_url(
+                bucket_name=BUCKET_NAME,
+                s3_key=s3_key,
+                expires_in=UPLOAD_URL_EXPIRY_SECONDS,
+            )
 
-                    return success_response({
-                        "file_id": candidate_id,
-                        "upload_url": upload_url,
-                        "expires_at": expires_at,
-                    })
+            logger.info(f"File upload initialized: file_id={file_id}, size={file_size}, ttl={ttl}, access_mode={access_mode}")
 
-            except ValueError as e:
-                if "already exists" in str(e):
-                    logger.warning(f"Short file ID collision: {candidate_id}, retrying (attempt {attempt + 1})")
-                    continue
-                raise
-
-        logger.error("Failed to generate unique file ID after max retries")
-        return error_response("Failed to generate unique file ID. Please try again.", 500)
+            return success_response({
+                "file_id": file_id,
+                "upload_url": upload_url,
+                "expires_at": expires_at,
+            })
 
     except ValidationError as e:
         logger.warning(f"Validation error: {e}")
         return error_response(str(e), 400)
+
+    except RuntimeError as e:
+        logger.error(str(e))
+        return error_response("Failed to generate unique file ID. Please try again.", 500)
 
     except Exception as e:
         logger.exception("Unexpected error in upload_init")

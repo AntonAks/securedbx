@@ -8,6 +8,7 @@ from typing import Any, Optional
 import boto3
 from botocore.exceptions import ClientError
 
+from .pin_utils import generate_short_file_id
 from .constants import (
     ACCESS_MODE_MULTI,
     ACCESS_MODE_ONE_TIME,
@@ -134,6 +135,21 @@ def get_file_record(table_name: str, file_id: str) -> Optional[dict[str, Any]]:
     except ClientError as e:
         logger.error(f"Error getting file record {file_id}: {e}")
         return None
+
+
+def generate_unique_file_id(table_name: str, max_retries: int = 10) -> str:
+    """
+    Generate a short file ID that does not already exist in DynamoDB.
+
+    Raises:
+        RuntimeError: If a unique ID cannot be found within max_retries attempts
+    """
+    for attempt in range(max_retries):
+        candidate = generate_short_file_id()
+        if get_file_record(table_name, candidate) is None:
+            return candidate
+        logger.warning(f"Short file ID collision: {candidate} (attempt {attempt + 1})")
+    raise RuntimeError("Failed to generate unique file ID after max retries")
 
 
 def reserve_download(table_name: str, file_id: str) -> dict[str, Any]:

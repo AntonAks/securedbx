@@ -3,6 +3,7 @@
 import hashlib
 import hmac
 import os
+import secrets
 from typing import Final
 
 from .constants import PIN_SALT_BYTES
@@ -30,3 +31,8 @@ def generate_pin_file_id() -> str:
     """Generate random 6-digit numeric file ID. Returns zero-padded string."""
     random_int = int.from_bytes(os.urandom(4), "big") % (_PIN_FILE_ID_MAX + 1)
     return f"{random_int:06d}"
+
+
+def generate_short_file_id() -> str:
+    """Generate random 8-char URL-safe file ID using base64url encoding."""
+    return secrets.token_urlsafe(6)

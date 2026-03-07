@@ -56,7 +56,7 @@ def create_file_record(
 
     Args:
         table_name: DynamoDB table name
-        file_id: Unique file/secret ID (UUID)
+        file_id: Unique file/secret ID (8-char URL-safe string)
         file_size: File size in bytes (or encrypted text size)
         expires_at: Unix timestamp when secret expires
         ip_hash: SHA256 hash of uploader IP
@@ -104,7 +104,12 @@ def create_file_record(
         record["encrypted_key"] = encrypted_key
         record["download_count"] = 0
 
-    table.put_item(Item=record)
+    try:
+        table.put_item(Item=record, ConditionExpression="attribute_not_exists(file_id)")
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            raise ValueError(f"File ID {file_id} already exists")
+        raise
     logger.info(f"Created {content_type} record ({access_mode}): {file_id}")
 
     return record

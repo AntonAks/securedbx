@@ -66,10 +66,11 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             "access_mode": access_mode,
         }
 
-        # Include vault-specific fields for multi-access mode
-        if access_mode == "multi":
+        # Include password fields if present (any access mode)
+        if record.get("salt"):
             response_data["salt"] = record.get("salt")
             response_data["encrypted_key"] = record.get("encrypted_key")
+        if access_mode == "multi":
             response_data["download_count"] = record.get("download_count", 0)
 
         return success_response(response_data)

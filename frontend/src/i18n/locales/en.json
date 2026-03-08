@@ -112,6 +112,16 @@
       "shareFiles": "Share Files",
       "encryptUpload": "Encrypt & Upload"
     },
+    "options": {
+      "passwordLabel": "Password protect",
+      "passwordPlaceholder": "Enter password...",
+      "passwordHint": "Share the password separately from the link",
+      "generatePassword": "Generate",
+      "copyPassword": "Copy",
+      "passwordCopied": "Copied!",
+      "multiDownloadLabel": "Allow multiple downloads",
+      "multiDownloadHint": "Link stays active until expiry (max 24h). Without this, link works once."
+    },
     "text": {
       "shareText": "Share Text Secret",
       "placeholder": "Enter your secret text (max 1000 characters)...",
@@ -292,6 +302,9 @@
     "readyToShare": "Ready to Share!",
     "vaultFileStored": "Your file has been stored in the vault.",
     "vaultTextStored": "Your text has been stored in the vault.",
+    "passwordFileStored": "Your file is encrypted and password-protected.",
+    "passwordTextStored": "Your text is encrypted and password-protected.",
+    "passwordProtectedNote": "Password protected",
     "textEncrypted": "Your text secret has been encrypted and stored.",
     "fileEncrypted": "Your file has been encrypted and uploaded.",
     "scanToDownload": "Scan to download",

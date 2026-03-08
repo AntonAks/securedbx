@@ -14,7 +14,7 @@
         <input type="radio" value="24h" v-model="selectedPreset" class="mr-2 text-blue-600 focus:ring-blue-500">
         <span class="text-gray-700 dark:text-slate-300">{{ $t('components.ttl.hours24') }}</span>
       </label>
-      <label v-if="showCustom" class="flex items-center cursor-pointer">
+      <label v-if="showCustom && !limitTo24h" class="flex items-center cursor-pointer">
         <input type="radio" value="custom" v-model="selectedPreset" class="mr-2 text-blue-600 focus:ring-blue-500">
         <span class="text-gray-700 dark:text-slate-300">{{ $t('components.ttl.custom') }}</span>
       </label>
@@ -36,10 +36,12 @@
 </template>
 
 <script setup>
+import { watch } from 'vue';
 import { useTtl } from '../composables/useTtl.js';
 
-defineProps({
+const props = defineProps({
   showCustom: { type: Boolean, default: true },
+  limitTo24h: { type: Boolean, default: false },
 });
 
 const {
@@ -51,6 +53,12 @@ const {
   expirationPreview,
   getTtl,
 } = useTtl();
+
+watch(() => props.limitTo24h, (limited) => {
+  if (limited && selectedPreset.value === 'custom') {
+    selectedPreset.value = '24h';
+  }
+});
 
 defineExpose({ getTtl });
 </script>

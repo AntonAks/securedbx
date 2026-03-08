@@ -113,14 +113,15 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         validate_ttl(ttl)
         validate_access_mode(access_mode)
 
-        # Validate vault-specific fields if multi-access mode
         salt = None
         encrypted_key = None
-        if access_mode == ACCESS_MODE_MULTI:
-            salt = body.get("salt")
-            encrypted_key = body.get("encrypted_key")
-            validate_salt(salt)
-            validate_encrypted_key(encrypted_key)
+        raw_salt = body.get("salt")
+        raw_encrypted_key = body.get("encrypted_key")
+        if raw_salt or raw_encrypted_key:
+            validate_salt(raw_salt)
+            validate_encrypted_key(raw_encrypted_key)
+            salt = raw_salt
+            encrypted_key = raw_encrypted_key
 
         # Calculate expiration timestamp
         ttl_seconds = ttl_to_seconds(ttl)

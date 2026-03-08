@@ -112,6 +112,16 @@
       "shareFiles": "Поділитися файлами",
       "encryptUpload": "Зашифрувати і завантажити"
     },
+    "options": {
+      "passwordLabel": "Захист паролем",
+      "passwordPlaceholder": "Введіть пароль...",
+      "passwordHint": "Поділіться паролем окремо від посилання",
+      "generatePassword": "Згенерувати",
+      "copyPassword": "Копіювати",
+      "passwordCopied": "Скопійовано!",
+      "multiDownloadLabel": "Дозволити кілька завантажень",
+      "multiDownloadHint": "Посилання діє до закінчення терміну (макс. 24г). Без цього — лише одноразове."
+    },
     "text": {
       "shareText": "Поділитися секретним текстом",
       "placeholder": "Введіть секретний текст (макс. 1000 символів)...",
@@ -292,6 +302,9 @@
     "readyToShare": "Готово до надсилання!",
     "vaultFileStored": "Ваш файл збережено у сховищі.",
     "vaultTextStored": "Ваш текст збережено у сховищі.",
+    "passwordFileStored": "Ваш файл зашифровано і захищено паролем.",
+    "passwordTextStored": "Ваш текст зашифровано і захищено паролем.",
+    "passwordProtectedNote": "Захищено паролем",
     "textEncrypted": "Ваш секретний текст зашифровано і збережено.",
     "fileEncrypted": "Ваш файл зашифровано і завантажено.",
     "scanToDownload": "Скануйте для завантаження",

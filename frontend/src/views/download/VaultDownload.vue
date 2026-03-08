@@ -29,7 +29,7 @@
           <strong class="text-gray-900 dark:text-slate-100">{{ $t('download.vault.expires') }}</strong>
           <span class="text-gray-500 dark:text-slate-400 ml-1">{{ expiresText }}</span>
         </p>
-        <p class="text-gray-600 dark:text-slate-300">
+        <p v-if="accessMode === 'multi'" class="text-gray-600 dark:text-slate-300">
           <strong class="text-gray-900 dark:text-slate-100">{{ $t('download.vault.downloads') }}</strong>
           <span class="text-gray-500 dark:text-slate-400 ml-1">{{ downloadCount }}</span>
         </p>
@@ -57,7 +57,7 @@
 
       <ProgressBar :visible="isDownloading" :percent="progress" :text="progressText" />
 
-      <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mt-4">
+      <div v-if="accessMode === 'multi'" class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mt-4">
         <p class="text-blue-700 dark:text-blue-300 text-sm text-center">
           {{ $t('download.vault.multiAccessNote') }}
         </p>
@@ -80,7 +80,7 @@
           class="w-full px-4 py-3 bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-200 font-mono text-sm mb-4 resize-vertical focus:outline-none focus:border-blue-500"></textarea>
         <button @click="copyText" class="btn-secondary btn-auto">{{ textCopied ? $t('download.vault.textCopied') : $t('download.vault.copyText') }}</button>
       </div>
-      <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-6">
+      <div v-if="accessMode === 'multi'" class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-6">
         <p class="text-blue-700 dark:text-blue-300 text-sm text-center">
           {{ $t('download.vault.accessAgain') }}
         </p>
@@ -99,7 +99,7 @@
         </h2>
         <p class="text-gray-700 dark:text-slate-300 mb-2">{{ $t('download.vault.fileDecrypted') }}</p>
       </div>
-      <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-6">
+      <div v-if="accessMode === 'multi'" class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-6">
         <p class="text-blue-700 dark:text-blue-300 text-sm text-center">
           {{ $t('download.vault.downloadAgain') }}
         </p>
@@ -135,6 +135,7 @@ const { getToken } = useRecaptcha();
 const { copied: textCopied, copy } = useClipboard();
 
 const step = ref('loading');
+const accessMode = ref('multi'); // updated from metadata
 const password = ref('');
 const showPassword = ref(false);
 const isDownloading = ref(false);
@@ -186,6 +187,7 @@ async function checkVaultAvailability() {
         if (!metadata.available) { showError(t('download.vault.vaultUnavailable')); return; }
 
         vaultMetadata = metadata;
+        accessMode.value = metadata.access_mode || 'multi';
         formattedSize.value = formatFileSize(metadata.file_size);
         downloadCount.value = metadata.download_count || 0;
         startExpirationCountdown(metadata.expires_at);

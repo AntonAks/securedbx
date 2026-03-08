@@ -24,7 +24,7 @@
             <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
-            {{ fileName ? $t('share.vaultFileStored') : $t('share.vaultTextStored') }}
+            {{ fileName ? $t('share.passwordFileStored') : $t('share.passwordTextStored') }}
           </span>
         </p>
         <p v-else class="text-gray-600 dark:text-slate-400 mt-2">
@@ -81,7 +81,7 @@
         <p class="text-yellow-500 font-semibold mb-2">{{ $t('share.warning') }}</p>
         <ul class="text-gray-700 dark:text-slate-300 text-sm space-y-1 ml-5 list-disc">
           <li v-if="isVault">
-            <span class="text-blue-600 dark:text-blue-400 font-medium">{{ $t('share.passwordProtected') }}</span>
+            <span class="text-blue-600 dark:text-blue-400 font-medium">{{ $t('share.passwordProtectedNote') }}</span>
             &bull; {{ $t('share.multiAccessUntilExpiry') }}
           </li>
           <template v-else>

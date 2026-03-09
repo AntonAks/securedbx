@@ -118,7 +118,7 @@ let countdownInterval = null;
 onMounted(async () => {
     try {
         fileId = route.query.id;
-        const keyBase64 = route.query.key;
+        const keyBase64 = route.query.key || '';
         fileName = route.query.name ? decodeURIComponent(route.query.name) : '';
 
         if (!fileId || !keyBase64) {
@@ -126,7 +126,7 @@ onMounted(async () => {
             return;
         }
 
-        encryptionKey = await CryptoModule.base64ToKey(keyBase64);
+        encryptionKey = await CryptoModule.importKey(CryptoModule.base64UrlToArray(keyBase64).buffer);
         await checkFileAvailability();
     } catch (error) {
         console.error('Initialization error:', error);

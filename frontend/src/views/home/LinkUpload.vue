@@ -150,7 +150,7 @@ async function handleUpload() {
             upload.updateProgress(20, t('upload.progress.securingKey'));
             const encryptedKeyData = await CryptoModule.encryptKey(dataKey, passwordKey);
             const encryptedKeyBase64 = CryptoModule.arrayToBase64(encryptedKeyData);
-            const saltBase64 = CryptoModule.arrayToBase64(salt);
+            const saltBase64 = CryptoModule.arrayToBase64Url(salt);
 
             upload.updateProgress(25, t('upload.progress.encrypting', { percent: 0 }));
             const encryptedData = await CryptoModule.encryptFile(fileToUpload, dataKey, (progress) => {
@@ -221,7 +221,8 @@ async function handleUpload() {
             await upload.uploadToS3(data.upload_url, encryptedData);
 
             upload.updateProgress(100, t('upload.progress.completeRedirect'));
-            const keyBase64 = await CryptoModule.keyToBase64(key);
+            const rawKey = await CryptoModule.exportKey(key);
+            const keyBase64 = CryptoModule.arrayToBase64Url(new Uint8Array(rawKey));
             const encodedFileName = encodeURIComponent(uploadFileName);
             setTimeout(() => {
                 router.push({ path: '/share', query: { id: data.file_id, key: keyBase64, name: encodedFileName } });

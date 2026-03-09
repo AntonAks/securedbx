@@ -135,7 +135,7 @@ async function handleUpload() {
             upload.updateProgress(20, t('upload.progress.securingKey'));
             const encryptedKeyData = await CryptoModule.encryptKey(dataKey, passwordKey);
             const encryptedKeyBase64 = CryptoModule.arrayToBase64(encryptedKeyData);
-            const saltBase64 = CryptoModule.arrayToBase64(salt);
+            const saltBase64 = CryptoModule.arrayToBase64Url(salt);
 
             upload.updateProgress(30, t('upload.progress.encryptingText'));
             const encryptedData = await CryptoModule.encrypt(textBuffer, dataKey);
@@ -176,7 +176,8 @@ async function handleUpload() {
             upload.updateProgress(30, t('upload.progress.encryptingText'));
             const encryptedData = await CryptoModule.encrypt(textBuffer, key);
             const base64Text = CryptoModule.arrayToBase64(encryptedData);
-            const keyBase64 = await CryptoModule.keyToBase64(key);
+            const rawKey = await CryptoModule.exportKey(key);
+            const keyBase64 = CryptoModule.arrayToBase64Url(new Uint8Array(rawKey));
 
             upload.updateProgress(60, t('upload.progress.verifying'));
             const recaptchaToken = await getToken('upload');

@@ -156,7 +156,7 @@ let countdownInterval = null;
 onMounted(async () => {
     try {
         fileId = route.query.id;
-        vaultSalt = route.query.salt;
+        vaultSalt = route.query.salt || '';
         fileName = route.query.name ? decodeURIComponent(route.query.name) : '';
 
         if (!fileId || !vaultSalt) {
@@ -224,7 +224,7 @@ async function handleVaultDownload() {
 
         progress.value = 5;
         progressText.value = t('download.progress.verifyingPassword');
-        const salt = CryptoModule.base64ToArray(vaultSalt);
+        const salt = CryptoModule.base64UrlToArray(vaultSalt);
         const passwordKey = await CryptoModule.deriveKeyFromPassword(password.value, salt);
 
         progress.value = 15;

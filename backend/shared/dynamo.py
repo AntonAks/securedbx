@@ -95,14 +95,13 @@ def create_file_record(
             raise ValueError("encrypted_text required for text content_type")
         record["encrypted_text"] = encrypted_text
 
-    # Add vault-specific fields for multi-access mode
-    if access_mode == ACCESS_MODE_MULTI:
-        if not salt:
-            raise ValueError("salt required for multi access mode")
-        if not encrypted_key:
-            raise ValueError("encrypted_key required for multi access mode")
+    # Add password-protection fields when present (any access mode)
+    if salt:
         record["salt"] = salt
         record["encrypted_key"] = encrypted_key
+
+    # Multi-access specific fields
+    if access_mode == ACCESS_MODE_MULTI:
         record["download_count"] = 0
 
     try:

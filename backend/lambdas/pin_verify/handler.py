@@ -58,13 +58,15 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
         if content_type == "text":
             logger.info(f"PIN text download: file_id={file_id}")
-            return success_response({
-                "content_type": "text",
-                "encrypted_text": record["encrypted_text"],
-                "salt": salt,
-                "file_size": record["file_size"],
-                "file_name": file_name,
-            })
+            return success_response(
+                {
+                    "content_type": "text",
+                    "encrypted_text": record["encrypted_text"],
+                    "salt": salt,
+                    "file_size": record["file_size"],
+                    "file_name": file_name,
+                }
+            )
         else:
             download_url = generate_download_url(
                 bucket_name=BUCKET_NAME,
@@ -72,13 +74,15 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 expires_in=DOWNLOAD_URL_EXPIRY_SECONDS,
             )
             logger.info(f"PIN file download: file_id={file_id}")
-            return success_response({
-                "content_type": "file",
-                "download_url": download_url,
-                "salt": salt,
-                "file_size": record["file_size"],
-                "file_name": file_name,
-            })
+            return success_response(
+                {
+                    "content_type": "file",
+                    "download_url": download_url,
+                    "salt": salt,
+                    "file_size": record["file_size"],
+                    "file_name": file_name,
+                }
+            )
 
     except ValidationError as e:
         msg = str(e)
@@ -95,6 +99,6 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         return error_response("File has expired", 410)
     except FileLockedException as e:
         return error_response(str(e), 423)
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error in pin_verify")
         return error_response("Internal server error", 500)

@@ -1,6 +1,7 @@
 """Unit tests for validation module - NO MOCKS."""
 
 import pytest
+from shared.exceptions import ValidationError
 from shared.validation import (
     validate_file_id,
     validate_file_size,
@@ -8,7 +9,6 @@ from shared.validation import (
     validate_pin_file_id,
     validate_ttl,
 )
-from shared.exceptions import ValidationError
 
 
 class TestValidateFileId:
@@ -59,12 +59,12 @@ class TestValidateFileId:
     def test_invalid_format(self):
         """Should reject invalid formats."""
         invalid_ids = [
-            "not-a-uuid",           # 10 chars with invalid structure
+            "not-a-uuid",  # 10 chars with invalid structure
             "550e8400-e29b-41d4-a716",  # Too short for UUID
             "550e8400-e29b-41d4-a716-446655440000-extra",  # Too long
-            "1234567",              # 7 chars — too short for short ID
-            "123456789",            # 9 chars — too long for short ID
-            "!@#$%^&*",            # 8 chars but invalid chars
+            "1234567",  # 7 chars — too short for short ID
+            "123456789",  # 9 chars — too long for short ID
+            "!@#$%^&*",  # 8 chars but invalid chars
         ]
 
         for file_id in invalid_ids:

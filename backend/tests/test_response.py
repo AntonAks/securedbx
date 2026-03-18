@@ -3,16 +3,15 @@
 import json
 from decimal import Decimal
 
-import pytest
 from shared.response import (
-    success_response,
-    error_response,
-    ok,
     bad_request,
+    error_response,
     forbidden,
-    not_found,
     gone,
     internal_error,
+    not_found,
+    ok,
+    success_response,
 )
 
 
@@ -39,8 +38,7 @@ class TestSuccessResponse:
     def test_success_with_additional_headers(self):
         """Should merge additional headers."""
         response = success_response(
-            {"data": "test"},
-            additional_headers={"X-Custom-Header": "value"}
+            {"data": "test"}, additional_headers={"X-Custom-Header": "value"}
         )
 
         assert response["headers"]["X-Custom-Header"] == "value"
@@ -74,7 +72,7 @@ class TestSuccessResponse:
         """Should not override standard headers with additional headers."""
         response = success_response(
             {"data": "test"},
-            additional_headers={"Content-Type": "text/plain"}  # Try to override
+            additional_headers={"Content-Type": "text/plain"},  # Try to override
         )
 
         # Additional header should override (last write wins)
@@ -103,9 +101,7 @@ class TestErrorResponse:
     def test_error_with_additional_headers(self):
         """Should merge additional headers."""
         response = error_response(
-            "Unauthorized",
-            status_code=401,
-            additional_headers={"WWW-Authenticate": "Bearer"}
+            "Unauthorized", status_code=401, additional_headers={"WWW-Authenticate": "Bearer"}
         )
 
         assert response["headers"]["WWW-Authenticate"] == "Bearer"
@@ -263,15 +259,7 @@ class TestResponseEdgeCases:
 
     def test_nested_data(self):
         """Should handle deeply nested data."""
-        data = {
-            "level1": {
-                "level2": {
-                    "level3": {
-                        "value": "deep"
-                    }
-                }
-            }
-        }
+        data = {"level1": {"level2": {"level3": {"value": "deep"}}}}
         response = success_response(data)
 
         body = json.loads(response["body"])

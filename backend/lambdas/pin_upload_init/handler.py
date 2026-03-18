@@ -6,7 +6,6 @@ import time
 from typing import Any
 
 from shared.constants import (
-    ACCESS_MODE_PIN,
     TTL_TO_SECONDS,
     UPLOAD_URL_EXPIRY_SECONDS,
 )
@@ -105,7 +104,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         ip_hash = hash_ip_secure(source_ip)
 
         # Retry loop for 6-digit ID collisions
-        for attempt in range(MAX_ID_RETRIES):
+        for _ in range(MAX_ID_RETRIES):
             candidate_id = generate_pin_file_id()
             try:
                 if content_type == "text":
@@ -130,11 +129,13 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
                     logger.info(f"PIN text created: file_id={candidate_id}, ttl={ttl}")
 
-                    return success_response({
-                        "file_id": candidate_id,
-                        "salt": salt,
-                        "expires_at": expires_at,
-                    })
+                    return success_response(
+                        {
+                            "file_id": candidate_id,
+                            "salt": salt,
+                            "expires_at": expires_at,
+                        }
+                    )
 
                 else:
                     file_size = body.get("file_size")
@@ -162,16 +163,17 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                     )
 
                     logger.info(
-                        f"PIN file upload init: file_id={candidate_id}, "
-                        f"size={file_size}, ttl={ttl}"
+                        f"PIN file upload init: file_id={candidate_id}, size={file_size}, ttl={ttl}"
                     )
 
-                    return success_response({
-                        "file_id": candidate_id,
-                        "upload_url": upload_url,
-                        "salt": salt,
-                        "expires_at": expires_at,
-                    })
+                    return success_response(
+                        {
+                            "file_id": candidate_id,
+                            "upload_url": upload_url,
+                            "salt": salt,
+                            "expires_at": expires_at,
+                        }
+                    )
 
             except ValueError as e:
                 if "already exists" in str(e):
@@ -187,6 +189,6 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         logger.warning(f"Validation error: {e}")
         return error_response(str(e), 400)
 
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error in pin_upload_init")
         return error_response("Internal server error", 500)

@@ -1,7 +1,6 @@
 """Unit tests for PIN upload init handler - validation and response format."""
 
 import pytest
-
 from shared.exceptions import ValidationError
 from shared.pin_utils import generate_pin_file_id, generate_salt, hash_pin, verify_pin_hash
 from shared.validation import validate_pin

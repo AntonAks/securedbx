@@ -82,12 +82,10 @@ def validate_ttl(ttl: Any) -> None:
         return
 
     # Accept numeric minutes
-    if isinstance(ttl, (int, float)):
+    if isinstance(ttl, int | float):
         minutes = int(ttl)
         if minutes < MIN_CUSTOM_TTL_MINUTES:
-            raise ValidationError(
-                f"Custom TTL must be at least {MIN_CUSTOM_TTL_MINUTES} minutes"
-            )
+            raise ValidationError(f"Custom TTL must be at least {MIN_CUSTOM_TTL_MINUTES} minutes")
         if minutes > MAX_CUSTOM_TTL_MINUTES:
             raise ValidationError(
                 f"Custom TTL cannot exceed {MAX_CUSTOM_TTL_MINUTES} minutes (7 days)"

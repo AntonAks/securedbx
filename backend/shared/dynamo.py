@@ -3,12 +3,11 @@
 import logging
 import time
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
 
-from .pin_utils import generate_short_file_id
 from .constants import (
     ACCESS_MODE_MULTI,
     ACCESS_MODE_ONE_TIME,
@@ -27,6 +26,7 @@ from .exceptions import (
     SessionExpiredError,
     ValidationError,
 )
+from .pin_utils import generate_short_file_id
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +46,11 @@ def create_file_record(
     expires_at: int,
     ip_hash: str,
     content_type: str = "file",
-    s3_key: Optional[str] = None,
-    encrypted_text: Optional[str] = None,
+    s3_key: str | None = None,
+    encrypted_text: str | None = None,
     access_mode: str = ACCESS_MODE_ONE_TIME,
-    salt: Optional[str] = None,
-    encrypted_key: Optional[str] = None,
+    salt: str | None = None,
+    encrypted_key: str | None = None,
 ) -> dict[str, Any]:
     """
     Create a new file or text secret record in DynamoDB.
@@ -108,14 +108,14 @@ def create_file_record(
         table.put_item(Item=record, ConditionExpression="attribute_not_exists(file_id)")
     except ClientError as e:
         if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-            raise ValueError(f"File ID {file_id} already exists")
+            raise ValueError(f"File ID {file_id} already exists") from e
         raise
     logger.info(f"Created {content_type} record ({access_mode}): {file_id}")
 
     return record
 
 
-def get_file_record(table_name: str, file_id: str) -> Optional[dict[str, Any]]:
+def get_file_record(table_name: str, file_id: str) -> dict[str, Any] | None:
     """
     Get file record from DynamoDB.
 
@@ -203,18 +203,18 @@ def reserve_download(table_name: str, file_id: str) -> dict[str, Any]:
             record = get_file_record(table_name, file_id)
 
             if not record:
-                raise FileNotFoundError("File not found")
+                raise FileNotFoundError("File not found") from e
 
             if record.get("downloaded"):
-                raise FileAlreadyDownloadedError("File already downloaded")
+                raise FileAlreadyDownloadedError("File already downloaded") from e
 
             if record.get("expires_at", 0) <= current_time:
-                raise FileExpiredError("File has expired")
+                raise FileExpiredError("File has expired") from e
 
             # File is currently reserved (reservation not expired yet)
             reserved_at = record.get("reserved_at", 0)
             if reserved_at >= reservation_cutoff:
-                raise FileReservedError("File is currently being downloaded")
+                raise FileReservedError("File is currently being downloaded") from e
 
             # Unknown condition failure
             raise
@@ -268,13 +268,13 @@ def mark_downloaded(table_name: str, file_id: str) -> dict[str, Any]:
             record = get_file_record(table_name, file_id)
 
             if not record:
-                raise FileNotFoundError("File not found")
+                raise FileNotFoundError("File not found") from e
 
             if record.get("downloaded"):
-                raise FileAlreadyDownloadedError("File already downloaded")
+                raise FileAlreadyDownloadedError("File already downloaded") from e
 
             if record.get("expires_at", 0) <= current_time:
-                raise FileExpiredError("File has expired")
+                raise FileExpiredError("File has expired") from e
 
             # Unknown condition failure
             raise
@@ -302,7 +302,6 @@ def confirm_download(table_name: str, file_id: str) -> dict[str, Any]:
         FileAlreadyDownloadedError: If file was already confirmed as downloaded
     """
     table = get_table(table_name)
-    current_time = int(time.time())
 
     try:
         response = table.update_item(
@@ -336,14 +335,14 @@ def confirm_download(table_name: str, file_id: str) -> dict[str, Any]:
             record = get_file_record(table_name, file_id)
 
             if not record:
-                raise FileNotFoundError("File not found")
+                raise FileNotFoundError("File not found") from e
 
             if record.get("downloaded"):
-                raise FileAlreadyDownloadedError("File already confirmed as downloaded")
+                raise FileAlreadyDownloadedError("File already confirmed as downloaded") from e
 
             # No reservation exists - shouldn't happen in normal flow
             logger.warning(f"Confirmation attempted without reservation: {file_id}")
-            raise FileNotFoundError("No active download reservation found")
+            raise FileNotFoundError("No active download reservation found") from e
 
         logger.error(f"Error confirming download for {file_id}: {e}")
         raise
@@ -404,15 +403,15 @@ def increment_vault_download(table_name: str, file_id: str) -> dict[str, Any]:
             record = get_file_record(table_name, file_id)
 
             if not record:
-                raise FileNotFoundError("File not found")
+                raise FileNotFoundError("File not found") from e
 
             if record.get("expires_at", 0) <= current_time:
-                raise FileExpiredError("File has expired")
+                raise FileExpiredError("File has expired") from e
 
             if record.get("access_mode") != ACCESS_MODE_MULTI:
                 # Should not happen - wrong function called
                 logger.error(f"increment_vault_download called for non-vault record: {file_id}")
-                raise ValueError("This is not a vault record")
+                raise ValueError("This is not a vault record") from e
 
             raise
 
@@ -551,9 +550,9 @@ def create_pin_file_record(
     pin_hash: str,
     salt: str,
     content_type: str = "file",
-    s3_key: Optional[str] = None,
-    encrypted_text: Optional[str] = None,
-    file_name: Optional[str] = None,
+    s3_key: str | None = None,
+    encrypted_text: str | None = None,
+    file_name: str | None = None,
     one_time: bool = True,
 ) -> dict[str, Any]:
     """
@@ -614,7 +613,7 @@ def create_pin_file_record(
         table.put_item(Item=record, ConditionExpression="attribute_not_exists(file_id)")
     except ClientError as e:
         if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-            raise ValueError(f"File ID {file_id} already exists")
+            raise ValueError(f"File ID {file_id} already exists") from e
         raise
 
     logger.info(f"Created PIN {content_type} record: {file_id}")
@@ -795,6 +794,6 @@ def verify_pin_and_download(table_name: str, file_id: str, pin: str) -> dict[str
     except ClientError as e:
         if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
             if is_one_time:
-                raise FileAlreadyDownloadedError("File has already been downloaded")
-            raise FileExpiredError("File has expired")
+                raise FileAlreadyDownloadedError("File has already been downloaded") from e
+            raise FileExpiredError("File has expired") from e
         raise

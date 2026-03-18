@@ -157,12 +157,16 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 encrypted_key=encrypted_key,
             )
 
-            logger.info(f"Text secret created: file_id={file_id}, size={len(encrypted_text)}, ttl={ttl}, access_mode={access_mode}")
+            logger.info(
+                f"Text secret created: file_id={file_id}, size={len(encrypted_text)}, ttl={ttl}, access_mode={access_mode}"
+            )
 
-            return success_response({
-                "file_id": file_id,
-                "expires_at": expires_at,
-            })
+            return success_response(
+                {
+                    "file_id": file_id,
+                    "expires_at": expires_at,
+                }
+            )
 
         else:
             file_size = body.get("file_size")
@@ -189,13 +193,17 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 expires_in=UPLOAD_URL_EXPIRY_SECONDS,
             )
 
-            logger.info(f"File upload initialized: file_id={file_id}, size={file_size}, ttl={ttl}, access_mode={access_mode}")
+            logger.info(
+                f"File upload initialized: file_id={file_id}, size={file_size}, ttl={ttl}, access_mode={access_mode}"
+            )
 
-            return success_response({
-                "file_id": file_id,
-                "upload_url": upload_url,
-                "expires_at": expires_at,
-            })
+            return success_response(
+                {
+                    "file_id": file_id,
+                    "upload_url": upload_url,
+                    "expires_at": expires_at,
+                }
+            )
 
     except ValidationError as e:
         logger.warning(f"Validation error: {e}")
@@ -205,6 +213,6 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         logger.error(str(e))
         return error_response("Failed to generate unique file ID. Please try again.", 500)
 
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error in upload_init")
         return error_response("Internal server error", 500)

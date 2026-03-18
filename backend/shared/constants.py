@@ -16,8 +16,8 @@ TTL_TO_SECONDS: Final[dict[str, int]] = {
 ALLOWED_TTL_VALUES: Final[tuple[str, ...]] = ("1h", "12h", "24h")
 
 # Custom TTL limits (in minutes)
-MIN_CUSTOM_TTL_MINUTES: Final[int] = 5        # 5 minutes
-MAX_CUSTOM_TTL_MINUTES: Final[int] = 10080    # 7 days (7 * 24 * 60)
+MIN_CUSTOM_TTL_MINUTES: Final[int] = 5  # 5 minutes
+MAX_CUSTOM_TTL_MINUTES: Final[int] = 10080  # 7 days (7 * 24 * 60)
 
 # Presigned URL expiry times (in seconds)
 UPLOAD_URL_EXPIRY_SECONDS: Final[int] = 900  # 15 minutes
@@ -33,7 +33,11 @@ AUTO_DELETE_THRESHOLD: Final[int] = 3  # Number of reports before auto-delete
 ACCESS_MODE_ONE_TIME: Final[str] = "one_time"
 ACCESS_MODE_MULTI: Final[str] = "multi"
 ACCESS_MODE_PIN: Final[str] = "pin"
-ALLOWED_ACCESS_MODES: Final[tuple[str, ...]] = (ACCESS_MODE_ONE_TIME, ACCESS_MODE_MULTI, ACCESS_MODE_PIN)
+ALLOWED_ACCESS_MODES: Final[tuple[str, ...]] = (
+    ACCESS_MODE_ONE_TIME,
+    ACCESS_MODE_MULTI,
+    ACCESS_MODE_PIN,
+)
 
 # PIN-based sharing
 PIN_LENGTH: Final[int] = 4

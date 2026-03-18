@@ -75,16 +75,20 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             # Text secret - return encrypted text directly
             log_suffix = f"score={event.get('_recaptcha_score', 'N/A')}"
             if access_mode == ACCESS_MODE_MULTI:
-                logger.info(f"Vault text download #{record.get('download_count', 1)}: file_id={file_id}, {log_suffix}")
+                logger.info(
+                    f"Vault text download #{record.get('download_count', 1)}: file_id={file_id}, {log_suffix}"
+                )
             else:
                 logger.info(f"Text secret download reserved: file_id={file_id}, {log_suffix}")
 
-            return success_response({
-                "content_type": "text",
-                "encrypted_text": record["encrypted_text"],
-                "file_size": record["file_size"],
-                "access_mode": access_mode,
-            })
+            return success_response(
+                {
+                    "content_type": "text",
+                    "encrypted_text": record["encrypted_text"],
+                    "file_size": record["file_size"],
+                    "access_mode": access_mode,
+                }
+            )
 
         else:
             # File - generate presigned download URL
@@ -96,16 +100,20 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
             log_suffix = f"score={event.get('_recaptcha_score', 'N/A')}"
             if access_mode == ACCESS_MODE_MULTI:
-                logger.info(f"Vault file download #{record.get('download_count', 1)}: file_id={file_id}, {log_suffix}")
+                logger.info(
+                    f"Vault file download #{record.get('download_count', 1)}: file_id={file_id}, {log_suffix}"
+                )
             else:
                 logger.info(f"File download reserved: file_id={file_id}, {log_suffix}")
 
-            return success_response({
-                "content_type": "file",
-                "download_url": download_url,
-                "file_size": record["file_size"],
-                "access_mode": access_mode,
-            })
+            return success_response(
+                {
+                    "content_type": "file",
+                    "download_url": download_url,
+                    "file_size": record["file_size"],
+                    "access_mode": access_mode,
+                }
+            )
 
     except ValidationError as e:
         logger.warning(f"Validation error: {e}")
@@ -127,6 +135,6 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         logger.info(f"File expired: {e}")
         return error_response("File expired", 410)
 
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error in download")
         return error_response("Internal server error", 500)

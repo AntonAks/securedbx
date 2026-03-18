@@ -41,14 +41,16 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         validate_file_id(file_id)
 
         # Confirm download (mark as downloaded)
-        record = confirm_download(TABLE_NAME, file_id)
+        confirm_download(TABLE_NAME, file_id)
 
         logger.info(f"Download confirmed: file_id={file_id}")
 
-        return success_response({
-            "message": "Download confirmed",
-            "file_id": file_id,
-        })
+        return success_response(
+            {
+                "message": "Download confirmed",
+                "file_id": file_id,
+            }
+        )
 
     except ValidationError as e:
         logger.warning(f"Validation error: {e}")
@@ -62,6 +64,6 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         logger.info(f"File already downloaded: {e}")
         return error_response("Download already confirmed", 410)
 
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error in confirm download")
         return error_response("Internal server error", 500)

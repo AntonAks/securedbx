@@ -12,9 +12,8 @@ Validation errors happen BEFORE any DynamoDB calls, so these tests don't need AW
 import json
 
 import pytest
-
-from lambdas.pin_upload_init.handler import handler as pin_upload_init_handler
 from lambdas.pin_initiate.handler import handler as pin_initiate_handler
+from lambdas.pin_upload_init.handler import handler as pin_upload_init_handler
 from lambdas.pin_verify.handler import handler as pin_verify_handler
 
 
@@ -57,11 +56,13 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_missing_pin_returns_400(self):
         """Should return 400 when PIN is not provided."""
-        event = _make_event({
-            "content_type": "file",
-            "file_size": 1024,
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "file_size": 1024,
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -72,12 +73,14 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_empty_pin_returns_400(self):
         """Should return 400 when PIN is empty string."""
-        event = _make_event({
-            "content_type": "file",
-            "file_size": 1024,
-            "pin": "",
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "file_size": 1024,
+                "pin": "",
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -87,12 +90,14 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_short_pin_returns_400(self):
         """Should return 400 when PIN is too short (< 4 chars)."""
-        event = _make_event({
-            "content_type": "file",
-            "file_size": 1024,
-            "pin": "12",
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "file_size": 1024,
+                "pin": "12",
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -103,12 +108,14 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_long_pin_returns_400(self):
         """Should return 400 when PIN is too long (> 4 chars)."""
-        event = _make_event({
-            "content_type": "file",
-            "file_size": 1024,
-            "pin": "12345",
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "file_size": 1024,
+                "pin": "12345",
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -119,12 +126,14 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_special_chars_pin_returns_400(self):
         """Should return 400 when PIN contains special characters."""
-        event = _make_event({
-            "content_type": "file",
-            "file_size": 1024,
-            "pin": "12@#",
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "file_size": 1024,
+                "pin": "12@#",
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -135,11 +144,13 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_missing_ttl_returns_400(self):
         """Should return 400 when TTL is not provided."""
-        event = _make_event({
-            "content_type": "file",
-            "file_size": 1024,
-            "pin": "7a2B",
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "file_size": 1024,
+                "pin": "7a2B",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -150,12 +161,14 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_invalid_ttl_returns_400(self):
         """Should return 400 when TTL is an invalid value."""
-        event = _make_event({
-            "content_type": "file",
-            "file_size": 1024,
-            "pin": "7a2B",
-            "ttl": "99h",
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "file_size": 1024,
+                "pin": "7a2B",
+                "ttl": "99h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -172,11 +185,13 @@ class TestPinUploadInitHandlerIntegration:
         We test that valid PIN + TTL pass validation successfully (the error
         will come from DynamoDB being unavailable, not from validation).
         """
-        event = _make_event({
-            "content_type": "file",
-            "pin": "7a2B",
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "pin": "7a2B",
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -191,11 +206,13 @@ class TestPinUploadInitHandlerIntegration:
         Note: encrypted_text validation happens inside the DynamoDB retry loop,
         so without DynamoDB configured it may return 400 or 500.
         """
-        event = _make_event({
-            "content_type": "text",
-            "pin": "7a2B",
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "content_type": "text",
+                "pin": "7a2B",
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -205,12 +222,14 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_negative_file_size_returns_400(self):
         """Should return 400 for negative file size."""
-        event = _make_event({
-            "content_type": "file",
-            "file_size": -1,
-            "pin": "7a2B",
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "file_size": -1,
+                "pin": "7a2B",
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -221,12 +240,14 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_zero_file_size_returns_400(self):
         """Should return 400 for zero file size."""
-        event = _make_event({
-            "content_type": "file",
-            "file_size": 0,
-            "pin": "7a2B",
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "file_size": 0,
+                "pin": "7a2B",
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -236,12 +257,14 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_response_has_standard_headers(self):
         """Should include Content-Type and CORS headers in all responses."""
-        event = _make_event({
-            "content_type": "file",
-            "file_size": 1024,
-            "ttl": "1h",
-            # Missing PIN
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "file_size": 1024,
+                "ttl": "1h",
+                # Missing PIN
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
 
@@ -251,10 +274,12 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_response_body_is_valid_json(self):
         """Should return valid JSON in all error responses."""
-        event = _make_event({
-            "pin": "12",  # Invalid: too short
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "pin": "12",  # Invalid: too short
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
 
@@ -290,12 +315,14 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_pin_with_spaces_returns_400(self):
         """Should return 400 when PIN contains spaces."""
-        event = _make_event({
-            "content_type": "file",
-            "file_size": 1024,
-            "pin": "ab d",
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "content_type": "file",
+                "file_size": 1024,
+                "pin": "ab d",
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -305,12 +332,14 @@ class TestPinUploadInitHandlerIntegration:
 
     def test_text_too_large_returns_error(self):
         """Should return error when text secret exceeds 10000 chars."""
-        event = _make_event({
-            "content_type": "text",
-            "encrypted_text": "a" * 10001,
-            "pin": "7a2B",
-            "ttl": "1h",
-        })
+        event = _make_event(
+            {
+                "content_type": "text",
+                "encrypted_text": "a" * 10001,
+                "pin": "7a2B",
+                "ttl": "1h",
+            }
+        )
 
         response = pin_upload_init_handler(event, None)
         status, body = _parse_response(response)
@@ -495,10 +524,12 @@ class TestPinVerifyHandlerIntegration:
 
     def test_invalid_file_id_returns_400(self):
         """Should return 400 for invalid file_id format."""
-        event = _make_event({
-            "file_id": "abc",
-            "pin": "7a2B",
-        })
+        event = _make_event(
+            {
+                "file_id": "abc",
+                "pin": "7a2B",
+            }
+        )
 
         response = pin_verify_handler(event, None)
         status, body = _parse_response(response)
@@ -508,10 +539,12 @@ class TestPinVerifyHandlerIntegration:
 
     def test_invalid_pin_format_returns_400(self):
         """Should return 400 for invalid PIN format."""
-        event = _make_event({
-            "file_id": "482973",
-            "pin": "@@",
-        })
+        event = _make_event(
+            {
+                "file_id": "482973",
+                "pin": "@@",
+            }
+        )
 
         response = pin_verify_handler(event, None)
         status, body = _parse_response(response)
@@ -521,10 +554,12 @@ class TestPinVerifyHandlerIntegration:
 
     def test_short_pin_returns_400(self):
         """Should return 400 when PIN is too short."""
-        event = _make_event({
-            "file_id": "482973",
-            "pin": "ab",
-        })
+        event = _make_event(
+            {
+                "file_id": "482973",
+                "pin": "ab",
+            }
+        )
 
         response = pin_verify_handler(event, None)
         status, body = _parse_response(response)
@@ -534,10 +569,12 @@ class TestPinVerifyHandlerIntegration:
 
     def test_long_pin_returns_400(self):
         """Should return 400 when PIN is too long."""
-        event = _make_event({
-            "file_id": "482973",
-            "pin": "abcde",
-        })
+        event = _make_event(
+            {
+                "file_id": "482973",
+                "pin": "abcde",
+            }
+        )
 
         response = pin_verify_handler(event, None)
         status, body = _parse_response(response)
@@ -547,10 +584,12 @@ class TestPinVerifyHandlerIntegration:
 
     def test_non_numeric_file_id_returns_400(self):
         """Should return 400 when file_id is not numeric."""
-        event = _make_event({
-            "file_id": "abcdef",
-            "pin": "7a2B",
-        })
+        event = _make_event(
+            {
+                "file_id": "abcdef",
+                "pin": "7a2B",
+            }
+        )
 
         response = pin_verify_handler(event, None)
         status, body = _parse_response(response)
@@ -560,10 +599,12 @@ class TestPinVerifyHandlerIntegration:
 
     def test_file_id_too_short_returns_400(self):
         """Should return 400 when file_id has fewer than 6 digits."""
-        event = _make_event({
-            "file_id": "12345",
-            "pin": "7a2B",
-        })
+        event = _make_event(
+            {
+                "file_id": "12345",
+                "pin": "7a2B",
+            }
+        )
 
         response = pin_verify_handler(event, None)
         status, body = _parse_response(response)
@@ -573,10 +614,12 @@ class TestPinVerifyHandlerIntegration:
 
     def test_empty_pin_returns_400(self):
         """Should return 400 when PIN is empty."""
-        event = _make_event({
-            "file_id": "482973",
-            "pin": "",
-        })
+        event = _make_event(
+            {
+                "file_id": "482973",
+                "pin": "",
+            }
+        )
 
         response = pin_verify_handler(event, None)
         status, body = _parse_response(response)
@@ -595,10 +638,12 @@ class TestPinVerifyHandlerIntegration:
 
     def test_response_body_is_valid_json(self):
         """Should return valid JSON in error responses."""
-        event = _make_event({
-            "file_id": "bad",
-            "pin": "bad",
-        })
+        event = _make_event(
+            {
+                "file_id": "bad",
+                "pin": "bad",
+            }
+        )
 
         response = pin_verify_handler(event, None)
 
@@ -609,10 +654,12 @@ class TestPinVerifyHandlerIntegration:
     def test_xss_in_pin_not_reflected(self):
         """Should not reflect malicious PIN input in error messages."""
         malicious = "<img src=x onerror=alert(1)>"
-        event = _make_event({
-            "file_id": "482973",
-            "pin": malicious,
-        })
+        event = _make_event(
+            {
+                "file_id": "482973",
+                "pin": malicious,
+            }
+        )
 
         response = pin_verify_handler(event, None)
         status, body = _parse_response(response)

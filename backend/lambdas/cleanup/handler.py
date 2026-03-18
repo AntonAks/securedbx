@@ -6,8 +6,6 @@ import os
 import time
 from typing import Any
 
-import boto3
-
 from shared.dynamo import delete_file_record, get_table
 from shared.response import error_response, success_response
 from shared.s3 import delete_file
@@ -85,18 +83,22 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 break  # No more items to scan
 
         logger.info(
-            json.dumps({
-                "action": "cleanup_completed",
-                "deleted": deleted_count,
-                "errors": error_count,
-            })
+            json.dumps(
+                {
+                    "action": "cleanup_completed",
+                    "deleted": deleted_count,
+                    "errors": error_count,
+                }
+            )
         )
 
-        return success_response({
-            "deleted": deleted_count,
-            "errors": error_count,
-        })
+        return success_response(
+            {
+                "deleted": deleted_count,
+                "errors": error_count,
+            }
+        )
 
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error in cleanup")
         return error_response("Internal server error", 500)

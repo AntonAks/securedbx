@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def parse_json_body(event: dict[str, Any]) -> dict[str, Any]:
         return {}
 
 
-def get_path_parameter(event: dict[str, Any], name: str) -> Optional[str]:
+def get_path_parameter(event: dict[str, Any], name: str) -> str | None:
     """
     Extract a path parameter from API Gateway event.
 
@@ -66,7 +66,7 @@ def get_path_parameter(event: dict[str, Any], name: str) -> Optional[str]:
     return event.get("pathParameters", {}).get(name)
 
 
-def get_query_parameter(event: dict[str, Any], name: str, default: Optional[str] = None) -> Optional[str]:
+def get_query_parameter(event: dict[str, Any], name: str, default: str | None = None) -> str | None:
     """
     Extract a query string parameter from API Gateway event.
 

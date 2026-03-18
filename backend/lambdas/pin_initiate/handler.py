@@ -40,11 +40,13 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
         logger.info(f"PIN session initiated: file_id={file_id}")
 
-        return success_response({
-            "message": "Session started. Enter PIN within 60 seconds",
-            "session_expires": result["session_expires"],
-            "attempts_left": result["attempts_left"],
-        })
+        return success_response(
+            {
+                "message": "Session started. Enter PIN within 60 seconds",
+                "session_expires": result["session_expires"],
+                "attempts_left": result["attempts_left"],
+            }
+        )
 
     except ValidationError as e:
         logger.warning(f"Validation error: {e}")
@@ -57,6 +59,6 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         return error_response("File has already been downloaded", 410)
     except FileLockedException as e:
         return error_response(str(e), 423)
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error in pin_initiate")
         return error_response("Internal server error", 500)

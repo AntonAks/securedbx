@@ -264,15 +264,7 @@ class TestEdgeCases:
 
     def test_deeply_nested_decimals(self):
         """Should handle deeply nested Decimal values."""
-        data = {
-            "level1": {
-                "level2": {
-                    "level3": {
-                        "value": Decimal("123.456")
-                    }
-                }
-            }
-        }
+        data = {"level1": {"level2": {"level3": {"value": Decimal("123.456")}}}}
         result = dumps(data)
 
         parsed = json.loads(result)

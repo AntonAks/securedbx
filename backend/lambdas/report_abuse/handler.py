@@ -47,30 +47,32 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         new_count = increment_report_count(TABLE_NAME, file_id)
 
         logger.warning(
-            json.dumps({
-                "action": "abuse_reported",
-                "file_id": file_id,
-                "reason": reason,
-                "report_count": new_count,
-                "recaptcha_score": event.get('_recaptcha_score', 'N/A'),
-            })
+            json.dumps(
+                {
+                    "action": "abuse_reported",
+                    "file_id": file_id,
+                    "reason": reason,
+                    "report_count": new_count,
+                    "recaptcha_score": event.get("_recaptcha_score", "N/A"),
+                }
+            )
         )
 
         # TODO: If count >= threshold, trigger admin review or auto-delete
         if new_count >= AUTO_DELETE_THRESHOLD:
-            logger.critical(
-                f"File {file_id} reached abuse threshold: {new_count} reports"
-            )
+            logger.critical(f"File {file_id} reached abuse threshold: {new_count} reports")
 
-        return success_response({
-            "message": "Report submitted successfully",
-            "report_count": new_count,
-        })
+        return success_response(
+            {
+                "message": "Report submitted successfully",
+                "report_count": new_count,
+            }
+        )
 
     except ValidationError as e:
         logger.warning(f"Validation error: {e}")
         return error_response(str(e), 400)
 
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error in report_abuse")
         return error_response("Internal server error", 500)

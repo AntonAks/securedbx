@@ -292,6 +292,11 @@ async function handleVaultDownload() {
             progressText.value = t('download.progress.downloadComplete');
             step.value = 'file-success';
         }
+
+        // For one-time access, confirm the download so it's marked as consumed
+        if (accessMode.value !== 'multi') {
+            confirmDownload();
+        }
     } catch (error) {
         console.error('Vault download error:', error);
         if (error.name === 'OperationError') {
@@ -339,6 +344,13 @@ function saveFile(data, filename) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+}
+
+function confirmDownload() {
+    fetch(`${API_BASE}/files/${fileId}/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+    }).catch(err => console.warn('Confirm download error:', err));
 }
 
 function resetForm() {

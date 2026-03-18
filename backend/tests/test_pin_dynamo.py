@@ -1,7 +1,7 @@
 """Unit tests for PIN-related DynamoDB functions - logic tests only."""
 
 import time
-import pytest
+
 from shared.constants import PIN_LOCKOUT_SECONDS, PIN_MAX_ATTEMPTS, PIN_SESSION_TIMEOUT_SECONDS
 
 

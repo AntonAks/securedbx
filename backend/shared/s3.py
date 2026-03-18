@@ -2,7 +2,6 @@
 
 import logging
 import os
-from typing import Optional
 
 import boto3
 from botocore.config import Config
@@ -17,7 +16,7 @@ AWS_REGION = os.environ.get("AWS_REGION", "eu-central-1")
 s3_client = boto3.client(
     "s3",
     region_name=AWS_REGION,
-    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"})
+    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
 )
 
 

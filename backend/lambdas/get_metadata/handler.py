@@ -79,6 +79,6 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         logger.warning(f"Validation error: {e}")
         return error_response(str(e), 400)
 
-    except Exception as e:
-        logger.exception(f"Unexpected error in get_metadata")
+    except Exception:
+        logger.exception("Unexpected error in get_metadata")
         return error_response("Internal server error", 500)

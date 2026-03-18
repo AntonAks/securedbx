@@ -1,9 +1,8 @@
 """Standardized Lambda response helpers."""
 
-from typing import Any, Optional
+from typing import Any
 
 from shared.json_helper import dumps as json_dumps
-
 
 # Standard CORS headers for all responses
 STANDARD_HEADERS = {
@@ -15,7 +14,7 @@ STANDARD_HEADERS = {
 def success_response(
     data: dict,
     status_code: int = 200,
-    additional_headers: Optional[dict] = None,
+    additional_headers: dict | None = None,
 ) -> dict[str, Any]:
     """
     Build successful API response.
@@ -50,7 +49,7 @@ def success_response(
 def error_response(
     message: str,
     status_code: int = 400,
-    additional_headers: Optional[dict] = None,
+    additional_headers: dict | None = None,
 ) -> dict[str, Any]:
     """
     Build error API response.
@@ -84,34 +83,37 @@ def error_response(
 
 # Convenience functions for common HTTP status codes
 
-def ok(data: dict, additional_headers: Optional[dict] = None) -> dict[str, Any]:
+
+def ok(data: dict, additional_headers: dict | None = None) -> dict[str, Any]:
     """Return 200 OK response with data."""
     return success_response(data, 200, additional_headers)
 
 
-def bad_request(message: str, additional_headers: Optional[dict] = None) -> dict[str, Any]:
+def bad_request(message: str, additional_headers: dict | None = None) -> dict[str, Any]:
     """Return 400 Bad Request error."""
     return error_response(message, 400, additional_headers)
 
 
-def forbidden(message: str = "Forbidden", additional_headers: Optional[dict] = None) -> dict[str, Any]:
+def forbidden(message: str = "Forbidden", additional_headers: dict | None = None) -> dict[str, Any]:
     """Return 403 Forbidden error."""
     return error_response(message, 403, additional_headers)
 
 
-def not_found(message: str = "Not found", additional_headers: Optional[dict] = None) -> dict[str, Any]:
+def not_found(message: str = "Not found", additional_headers: dict | None = None) -> dict[str, Any]:
     """Return 404 Not Found error."""
     return error_response(message, 404, additional_headers)
 
 
-def gone(message: str = "Resource no longer available", additional_headers: Optional[dict] = None) -> dict[str, Any]:
+def gone(
+    message: str = "Resource no longer available", additional_headers: dict | None = None
+) -> dict[str, Any]:
     """Return 410 Gone error."""
     return error_response(message, 410, additional_headers)
 
 
 def internal_error(
     message: str = "Internal server error",
-    additional_headers: Optional[dict] = None,
+    additional_headers: dict | None = None,
 ) -> dict[str, Any]:
     """Return 500 Internal Server Error."""
     return error_response(message, 500, additional_headers)

@@ -101,7 +101,6 @@ function generatePassword() {
     const arr = new Uint8Array(16);
     crypto.getRandomValues(arr);
     password.value = Array.from(arr).map(b => chars[b % chars.length]).join('');
-    showPassword.value = true;
 }
 
 function copyPasswordToClipboard() {

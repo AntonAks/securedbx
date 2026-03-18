@@ -1,8 +1,14 @@
 """Unit tests for security module - NO MOCKS (CloudFront origin check only)."""
 
-import os
+from unittest.mock import MagicMock, patch
+
 import pytest
-from shared.security import verify_cloudfront_origin
+from shared.security import (
+    _get_ssm_parameter,
+    get_ip_hash_salt,
+    hash_ip_secure,
+    verify_cloudfront_origin,
+)
 
 
 class TestVerifyCloudFrontOrigin:
@@ -13,14 +19,8 @@ class TestVerifyCloudFrontOrigin:
         monkeypatch.setenv("CLOUDFRONT_SECRET", "test-secret-123")
 
         event = {
-            "headers": {
-                "X-Origin-Verify": "test-secret-123"
-            },
-            "requestContext": {
-                "identity": {
-                    "sourceIp": "1.2.3.4"
-                }
-            }
+            "headers": {"X-Origin-Verify": "test-secret-123"},
+            "requestContext": {"identity": {"sourceIp": "1.2.3.4"}},
         }
 
         assert verify_cloudfront_origin(event) is True
@@ -44,14 +44,8 @@ class TestVerifyCloudFrontOrigin:
         monkeypatch.setenv("CLOUDFRONT_SECRET", "correct-secret")
 
         event = {
-            "headers": {
-                "X-Origin-Verify": "wrong-secret"
-            },
-            "requestContext": {
-                "identity": {
-                    "sourceIp": "1.2.3.4"
-                }
-            }
+            "headers": {"X-Origin-Verify": "wrong-secret"},
+            "requestContext": {"identity": {"sourceIp": "1.2.3.4"}},
         }
 
         assert verify_cloudfront_origin(event) is False
@@ -60,14 +54,7 @@ class TestVerifyCloudFrontOrigin:
         """Should reject request without origin header."""
         monkeypatch.setenv("CLOUDFRONT_SECRET", "test-secret")
 
-        event = {
-            "headers": {},
-            "requestContext": {
-                "identity": {
-                    "sourceIp": "1.2.3.4"
-                }
-            }
-        }
+        event = {"headers": {}, "requestContext": {"identity": {"sourceIp": "1.2.3.4"}}}
 
         assert verify_cloudfront_origin(event) is False
 
@@ -75,11 +62,7 @@ class TestVerifyCloudFrontOrigin:
         """Should reject request with empty secret header."""
         monkeypatch.setenv("CLOUDFRONT_SECRET", "test-secret")
 
-        event = {
-            "headers": {
-                "X-Origin-Verify": ""
-            }
-        }
+        event = {"headers": {"X-Origin-Verify": ""}}
 
         assert verify_cloudfront_origin(event) is False
 
@@ -87,9 +70,7 @@ class TestVerifyCloudFrontOrigin:
         """Should allow request when no secret is configured (dev mode)."""
         monkeypatch.delenv("CLOUDFRONT_SECRET", raising=False)
 
-        event = {
-            "headers": {}
-        }
+        event = {"headers": {}}
 
         assert verify_cloudfront_origin(event) is True
 
@@ -97,9 +78,7 @@ class TestVerifyCloudFrontOrigin:
         """Should allow request when secret is empty string (dev mode)."""
         monkeypatch.setenv("CLOUDFRONT_SECRET", "")
 
-        event = {
-            "headers": {}
-        }
+        event = {"headers": {}}
 
         assert verify_cloudfront_origin(event) is True
 
@@ -120,7 +99,7 @@ class TestVerifyCloudFrontOrigin:
                 "Content-Type": "application/json",
                 "User-Agent": "Mozilla/5.0",
                 "X-Origin-Verify": "test-secret",
-                "Accept": "*/*"
+                "Accept": "*/*",
             }
         }
 
@@ -131,11 +110,7 @@ class TestVerifyCloudFrontOrigin:
         secret = "test-secret!@#$%^&*()_+-={}[]|\\:;\"'<>?,./"
         monkeypatch.setenv("CLOUDFRONT_SECRET", secret)
 
-        event = {
-            "headers": {
-                "X-Origin-Verify": secret
-            }
-        }
+        event = {"headers": {"X-Origin-Verify": secret}}
 
         assert verify_cloudfront_origin(event) is True
 
@@ -144,11 +119,7 @@ class TestVerifyCloudFrontOrigin:
         secret = "a" * 1000
         monkeypatch.setenv("CLOUDFRONT_SECRET", secret)
 
-        event = {
-            "headers": {
-                "X-Origin-Verify": secret
-            }
-        }
+        event = {"headers": {"X-Origin-Verify": secret}}
 
         assert verify_cloudfront_origin(event) is True
 
@@ -157,11 +128,7 @@ class TestVerifyCloudFrontOrigin:
         secret = "test-秘密-🔒"
         monkeypatch.setenv("CLOUDFRONT_SECRET", secret)
 
-        event = {
-            "headers": {
-                "X-Origin-Verify": secret
-            }
-        }
+        event = {"headers": {"X-Origin-Verify": secret}}
 
         assert verify_cloudfront_origin(event) is True
 
@@ -204,9 +171,7 @@ class TestSecurityEdgeCases:
         monkeypatch.setenv("CLOUDFRONT_SECRET", "test-secret")
 
         event = {
-            "headers": {
-                "X-Origin-Verify": "test-secret"
-            }
+            "headers": {"X-Origin-Verify": "test-secret"}
             # No requestContext
         }
 
@@ -230,10 +195,6 @@ class TestSecurityEdgeCases:
             verify_cloudfront_origin(None)
 
 
-from unittest.mock import patch, MagicMock
-from shared.security import hash_ip_secure, get_ip_hash_salt, _get_ssm_parameter
-
-
 class TestIPHashWithParameterStore:
     """Test HMAC-SHA256 IP hashing with Parameter Store salt."""
 
@@ -241,84 +202,76 @@ class TestIPHashWithParameterStore:
         """Clear caches between tests."""
         _get_ssm_parameter.cache_clear()
         import shared.security
+
         shared.security._ip_hash_salt_cache = None
 
-    @patch('shared.security.boto3.client')
+    @patch("shared.security.boto3.client")
     def test_get_ssm_parameter_success(self, mock_boto_client, monkeypatch):
         """Should retrieve parameter from SSM."""
         mock_ssm = MagicMock()
-        mock_ssm.get_parameter.return_value = {
-            'Parameter': {'Value': 'test-salt-value'}
-        }
+        mock_ssm.get_parameter.return_value = {"Parameter": {"Value": "test-salt-value"}}
         mock_boto_client.return_value = mock_ssm
 
-        result = _get_ssm_parameter('/sdbx/dev/ip-hash-salt')
+        result = _get_ssm_parameter("/sdbx/dev/ip-hash-salt")
 
-        assert result == 'test-salt-value'
+        assert result == "test-salt-value"
         mock_ssm.get_parameter.assert_called_once_with(
-            Name='/sdbx/dev/ip-hash-salt',
-            WithDecryption=True
+            Name="/sdbx/dev/ip-hash-salt", WithDecryption=True
         )
 
-    @patch('shared.security.boto3.client')
+    @patch("shared.security.boto3.client")
     def test_get_ssm_parameter_caching(self, mock_boto_client):
         """Should only call SSM once due to LRU cache."""
         mock_ssm = MagicMock()
-        mock_ssm.get_parameter.return_value = {
-            'Parameter': {'Value': 'cached-salt'}
-        }
+        mock_ssm.get_parameter.return_value = {"Parameter": {"Value": "cached-salt"}}
         mock_boto_client.return_value = mock_ssm
 
-        result1 = _get_ssm_parameter('/sdbx/dev/ip-hash-salt')
-        result2 = _get_ssm_parameter('/sdbx/dev/ip-hash-salt')
+        result1 = _get_ssm_parameter("/sdbx/dev/ip-hash-salt")
+        result2 = _get_ssm_parameter("/sdbx/dev/ip-hash-salt")
 
-        assert result1 == result2 == 'cached-salt'
+        assert result1 == result2 == "cached-salt"
         assert mock_ssm.get_parameter.call_count == 1
 
-    @patch('shared.security.boto3.client')
+    @patch("shared.security.boto3.client")
     def test_hash_ip_secure_with_parameter_store(self, mock_boto_client, monkeypatch):
         """Should produce valid HMAC-SHA256 hash."""
-        monkeypatch.setenv('IP_HASH_SALT_PARAM', '/sdbx/dev/ip-hash-salt')
+        monkeypatch.setenv("IP_HASH_SALT_PARAM", "/sdbx/dev/ip-hash-salt")
         mock_ssm = MagicMock()
-        mock_ssm.get_parameter.return_value = {
-            'Parameter': {'Value': 'test-salt'}
-        }
+        mock_ssm.get_parameter.return_value = {"Parameter": {"Value": "test-salt"}}
         mock_boto_client.return_value = mock_ssm
 
-        result = hash_ip_secure('192.168.1.1')
+        result = hash_ip_secure("192.168.1.1")
 
         assert len(result) == 64
-        assert all(c in '0123456789abcdef' for c in result)
+        assert all(c in "0123456789abcdef" for c in result)
 
-    @patch('shared.security.boto3.client')
+    @patch("shared.security.boto3.client")
     def test_hash_ip_secure_different_ips_different_hashes(self, mock_boto_client, monkeypatch):
         """Different IPs should produce different hashes."""
-        monkeypatch.setenv('IP_HASH_SALT_PARAM', '/sdbx/dev/ip-hash-salt')
+        monkeypatch.setenv("IP_HASH_SALT_PARAM", "/sdbx/dev/ip-hash-salt")
         mock_ssm = MagicMock()
-        mock_ssm.get_parameter.return_value = {
-            'Parameter': {'Value': 'test-salt'}
-        }
+        mock_ssm.get_parameter.return_value = {"Parameter": {"Value": "test-salt"}}
         mock_boto_client.return_value = mock_ssm
 
-        hash1 = hash_ip_secure('192.168.1.1')
-        hash2 = hash_ip_secure('10.0.0.1')
+        hash1 = hash_ip_secure("192.168.1.1")
+        hash2 = hash_ip_secure("10.0.0.1")
 
         assert hash1 != hash2
 
     def test_get_ip_hash_salt_no_param_name(self, monkeypatch):
         """Should raise error if IP_HASH_SALT_PARAM env var not set."""
-        monkeypatch.delenv('IP_HASH_SALT_PARAM', raising=False)
+        monkeypatch.delenv("IP_HASH_SALT_PARAM", raising=False)
 
         with pytest.raises(ValueError, match="IP_HASH_SALT_PARAM"):
             get_ip_hash_salt()
 
-    @patch('shared.security.boto3.client')
+    @patch("shared.security.boto3.client")
     def test_hash_ip_secure_parameter_not_found(self, mock_boto_client, monkeypatch):
         """Should raise error if parameter doesn't exist in SSM."""
-        monkeypatch.setenv('IP_HASH_SALT_PARAM', '/sdbx/dev/ip-hash-salt')
+        monkeypatch.setenv("IP_HASH_SALT_PARAM", "/sdbx/dev/ip-hash-salt")
         mock_ssm = MagicMock()
         mock_ssm.get_parameter.side_effect = Exception("ParameterNotFound")
         mock_boto_client.return_value = mock_ssm
 
         with pytest.raises(Exception):
-            hash_ip_secure('192.168.1.1')
+            hash_ip_secure("192.168.1.1")

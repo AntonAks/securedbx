@@ -33,6 +33,6 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
         return success_response(stats)
 
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error getting statistics")
         return error_response("Internal server error", 500)

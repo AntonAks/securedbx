@@ -1,7 +1,5 @@
 """Unit tests for upload_init handler — retry logic."""
 
-import pytest
-
 
 class TestShortFileIdRetryLogic:
     """Test the retry logic pattern used by upload_init handler."""

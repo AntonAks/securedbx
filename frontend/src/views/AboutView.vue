@@ -88,6 +88,45 @@
       </div>
     </section>
 
+    <!-- E2E Encryption Flow Diagrams -->
+    <section class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8 mb-6">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-2">{{ $t('about.encryptionFlow.heading') }}</h2>
+      <p class="text-gray-500 dark:text-slate-400 text-sm mb-8">{{ $t('about.encryptionFlow.subtitle') }}</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Standard Mode Flow -->
+        <div>
+          <h3 class="text-base font-semibold text-gray-800 dark:text-slate-200 mb-4">{{ $t('about.encryptionFlow.standardTitle') }}</h3>
+          <ol role="list" :aria-label="$t('about.encryptionFlow.standardTitle')"
+              class="flex flex-col items-stretch gap-0">
+            <li v-for="n in 7" :key="'std-'+n" class="flex flex-col items-center">
+              <div class="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-4 py-3 w-full text-center">
+                <p class="text-sm font-semibold text-blue-700 dark:text-blue-300 leading-tight">{{ $t(`about.encryptionFlow.standard.step${n}`) }}</p>
+                <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 leading-tight">{{ $t(`about.encryptionFlow.standard.step${n}desc`) }}</p>
+              </div>
+              <span v-if="n < 7" class="text-gray-400 dark:text-slate-600 font-bold text-lg leading-none my-1">↓</span>
+            </li>
+          </ol>
+          <p class="text-xs text-gray-500 dark:text-slate-400 mt-3 italic">{{ $t('about.encryptionFlow.keyNote') }}</p>
+        </div>
+
+        <!-- Password-protected Flow -->
+        <div>
+          <h3 class="text-base font-semibold text-gray-800 dark:text-slate-200 mb-4">{{ $t('about.encryptionFlow.vaultTitle') }}</h3>
+          <ol role="list" :aria-label="$t('about.encryptionFlow.vaultTitle')"
+              class="flex flex-col items-stretch gap-0">
+            <li v-for="n in 8" :key="'vlt-'+n" class="flex flex-col items-center">
+              <div class="rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 px-4 py-3 w-full text-center">
+                <p class="text-sm font-semibold text-purple-700 dark:text-purple-300 leading-tight">{{ $t(`about.encryptionFlow.vault.step${n}`) }}</p>
+                <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 leading-tight">{{ $t(`about.encryptionFlow.vault.step${n}desc`) }}</p>
+              </div>
+              <span v-if="n < 8" class="text-gray-400 dark:text-slate-600 font-bold text-lg leading-none my-1">↓</span>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
     <!-- Security Features -->
     <section class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8 mb-6">
       <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">{{ $t('about.security.heading') }}</h2>

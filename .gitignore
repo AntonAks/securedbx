@@ -96,6 +96,7 @@ Thumbs.db
 *.backup
 
 .claude/*
+.superpowers/
 docs/*
 !docs/plans/
 !docs/plans/**

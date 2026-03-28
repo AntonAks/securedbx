@@ -154,6 +154,7 @@ async function handleUpload() {
                     access_mode: accessMode,
                     salt: saltBase64,
                     encrypted_key: encryptedKeyBase64,
+                    text_size: textBuffer.byteLength,
                     recaptcha_token: recaptchaToken,
                 }),
             });
@@ -190,6 +191,7 @@ async function handleUpload() {
                     encrypted_text: base64Text,
                     ttl,
                     access_mode: accessMode,
+                    text_size: textBuffer.byteLength,
                     recaptcha_token: recaptchaToken,
                 }),
             });

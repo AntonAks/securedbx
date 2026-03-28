@@ -452,6 +452,47 @@
       "vaultMode": "Vault Mode",
       "vaultModeDesc": "Password-protected sharing with unlimited access until expiry. Double encryption layer: content encrypted with a random data key, which is itself encrypted with a password-derived key."
     },
+    "encryptionFlow": {
+      "heading": "How Encryption Works",
+      "subtitle": "Your data is encrypted and decrypted entirely in your browser. The server only ever sees ciphertext.",
+      "standardTitle": "Standard Mode — key in URL",
+      "vaultTitle": "With Password — double encryption",
+      "keyNote": "The #fragment part of the URL is never sent to the server by your browser.",
+      "standard": {
+        "step1": "Your browser",
+        "step1desc": "Sender",
+        "step2": "🔑 Key generated",
+        "step2desc": "In your browser only",
+        "step3": "🔒 Data encrypted",
+        "step3desc": "Locally, before upload",
+        "step4": "🔗 Key → URL #fragment",
+        "step4desc": "Never sent to server",
+        "step5": "☁️ Server",
+        "step5desc": "Stores ciphertext only",
+        "step6": "🔗 Recipient opens link",
+        "step6desc": "Key from #fragment",
+        "step7": "🔓 Decrypted",
+        "step7desc": "In recipient's browser"
+      },
+      "vault": {
+        "step1": "Your browser",
+        "step1desc": "Sender",
+        "step2": "🔑 Key generated",
+        "step2desc": "In your browser only",
+        "step3": "🔒 Data encrypted",
+        "step3desc": "Locally, before upload",
+        "step4": "🔑 Password key (PBKDF2)",
+        "step4desc": "Derives a second key from your password — wraps the data key",
+        "step5": "☁️ Server",
+        "step5desc": "Stores ciphertext + wrapped key — can't decrypt without password",
+        "step6": "🔗 Recipient opens link",
+        "step6desc": "No key in URL",
+        "step7": "🔑 Password entered",
+        "step7desc": "Unwraps data key → decrypts content",
+        "step8": "🔓 Decrypted",
+        "step8desc": "In recipient's browser"
+      }
+    },
     "security": {
       "heading": "Security Features",
       "e2e": "End-to-End Encryption:",

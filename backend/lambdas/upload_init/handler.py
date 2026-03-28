@@ -70,7 +70,8 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         "content_type": "text",
         "encrypted_text": "base64-encrypted-text",
         "ttl": "1h",
-        "recaptcha_token": "token"
+        "recaptcha_token": "token",
+        "text_size": 42  // optional; original byte count before encryption
     }
 
     Expected request body (vault file):
@@ -92,7 +93,8 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         "access_mode": "multi",
         "salt": "base64-salt",
         "encrypted_key": "base64-encrypted-key",
-        "recaptcha_token": "token"
+        "recaptcha_token": "token",
+        "text_size": 42  // optional; original byte count before encryption
     }
 
     Returns:
@@ -144,10 +146,24 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             if len(encrypted_text) > max_text_size:
                 raise ValidationError("Text secret too large")
 
+            # Resolve file_size: prefer client-supplied original byte count
+            raw_text_size = body.get("text_size")
+            if raw_text_size is None:
+                file_size = len(encrypted_text)  # backwards compat fallback
+            else:
+                # Validate: must be plain int (not bool, not float, not str)
+                if type(raw_text_size) is not int:
+                    raise ValidationError("text_size must be an integer")
+                if raw_text_size <= 0:
+                    raise ValidationError("text_size must be positive")
+                if raw_text_size > len(encrypted_text):
+                    raise ValidationError("text_size cannot exceed encrypted text length")
+                file_size = raw_text_size
+
             create_file_record(
                 table_name=TABLE_NAME,
                 file_id=file_id,
-                file_size=len(encrypted_text),
+                file_size=file_size,
                 expires_at=expires_at,
                 ip_hash=ip_hash,
                 content_type="text",
@@ -158,7 +174,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             )
 
             logger.info(
-                f"Text secret created: file_id={file_id}, size={len(encrypted_text)}, ttl={ttl}, access_mode={access_mode}"
+                f"Text secret created: file_id={file_id}, size={file_size}, ttl={ttl}, access_mode={access_mode}"
             )
 
             return success_response(

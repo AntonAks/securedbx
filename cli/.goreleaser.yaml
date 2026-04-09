@@ -1,0 +1,45 @@
+version: 2
+
+project_name: securedbx
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: ./cmd/securedbx
+    binary: securedbx
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: "checksums.txt"
+
+brews:
+  - repository:
+      owner: securedbx
+      name: homebrew-securedbx
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://sdbx.cc"
+    description: "Zero-knowledge file sharing CLI"
+    install: |
+      bin.install "securedbx"
+    test: |
+      system "#{bin}/securedbx --version"

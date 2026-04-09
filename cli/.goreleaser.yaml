@@ -37,7 +37,7 @@ brews:
       owner: securedbx
       name: homebrew-securedbx
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    homepage: "https://sdbx.cc"
+    homepage: "https://securedbx.com"
     description: "Zero-knowledge file sharing CLI"
     install: |
       bin.install "securedbx"

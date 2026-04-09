@@ -244,7 +244,7 @@ func sendPINMode(ctx context.Context, client *api.Client, plaintext []byte, file
 
 func buildShareURL(fileID string, key []byte, filename string) string {
 	keyStr := crypto.KeyToBase64URL(key)
-	return fmt.Sprintf("https://sdbx.cc/#/download?id=%s&key=%s&name=%s", fileID, keyStr, urlEncode(filename))
+	return fmt.Sprintf("https://securedbx.com/#/download?id=%s&key=%s&name=%s", fileID, keyStr, urlEncode(filename))
 }
 
 func readPassword(prompt string) (string, error) {

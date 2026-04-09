@@ -12,7 +12,7 @@ import (
 func main() {
 	root := &cobra.Command{
 		Use:   "securedbx",
-		Short: "Zero-knowledge file sharing CLI for sdbx.cc",
+		Short: "Zero-knowledge file sharing CLI for securedbx.com",
 	}
 
 	root.AddCommand(commands.NewSendCmd())

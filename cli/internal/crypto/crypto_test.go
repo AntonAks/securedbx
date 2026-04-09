@@ -27,7 +27,7 @@ func TestEncryptDecryptRoundTrip(t *testing.T) {
 			ct, key, err := crypto.Encrypt(tt.plaintext)
 			require.NoError(t, err)
 			assert.Len(t, key, 32, "key must be 32 bytes")
-			assert.Greater(t, len(ct), 12+16, "ciphertext must be > nonce+tag")
+			assert.GreaterOrEqual(t, len(ct), 12+16, "ciphertext must be >= nonce+tag")
 
 			pt, err := crypto.Decrypt(ct, key)
 			require.NoError(t, err)

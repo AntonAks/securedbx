@@ -696,7 +696,6 @@ module "lambda_auth_init" {
   runtime       = var.lambda_runtime
   timeout       = var.lambda_timeout
   memory_size   = var.lambda_memory_size
-  source_dir    = "${path.root}/../../../backend/lambdas/auth_init"
   layers        = [aws_lambda_layer_version.dependencies.arn]
 
   environment_variables = {
@@ -725,7 +724,6 @@ module "lambda_auth_confirm" {
   runtime       = var.lambda_runtime
   timeout       = var.lambda_timeout
   memory_size   = var.lambda_memory_size
-  source_dir    = "${path.root}/../../../backend/lambdas/auth_confirm"
   layers        = [aws_lambda_layer_version.dependencies.arn]
 
   environment_variables = {

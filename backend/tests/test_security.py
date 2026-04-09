@@ -275,3 +275,66 @@ class TestIPHashWithParameterStore:
 
         with pytest.raises(Exception):
             hash_ip_secure("192.168.1.1")
+
+
+def make_event(headers=None, body=None):
+    return {
+        "headers": headers or {"x-origin-verify": "test-secret"},
+        "body": body or "{}",
+        "requestContext": {"identity": {"sourceIp": "1.2.3.4"}},
+    }
+
+
+class TestRequireCloudFrontAndAuth:
+    def test_cli_key_valid(self):
+        from shared.security import require_cloudfront_and_auth
+
+        @require_cloudfront_and_auth
+        def handler(event, context):
+            return {"statusCode": 200, "body": "ok"}
+
+        with patch.dict(
+            "os.environ",
+            {
+                "CLOUDFRONT_SECRET": "test-secret",
+                "AUTH_TABLE_NAME": "auth-table",
+            },
+        ):
+            with patch("shared.security.verify_cli_api_key", return_value=True):
+                event = make_event(
+                    headers={"x-origin-verify": "test-secret", "x-cli-api-key": "sdbx_cli_abc"},
+                )
+                result = handler(event, None)
+        assert result["statusCode"] == 200
+
+    def test_cli_key_invalid(self):
+        from shared.security import require_cloudfront_and_auth
+
+        @require_cloudfront_and_auth
+        def handler(event, context):
+            return {"statusCode": 200, "body": "ok"}
+
+        with patch.dict("os.environ", {"CLOUDFRONT_SECRET": "test-secret", "AUTH_TABLE_NAME": "t"}):
+            with patch("shared.security.verify_cli_api_key", return_value=False):
+                event = make_event(
+                    headers={"x-origin-verify": "test-secret", "x-cli-api-key": "bad"},
+                )
+                result = handler(event, None)
+        assert result["statusCode"] == 403
+
+    def test_browser_recaptcha_path(self):
+        import json
+
+        from shared.security import require_cloudfront_and_auth
+
+        @require_cloudfront_and_auth
+        def handler(event, context):
+            return {"statusCode": 200, "body": "ok"}
+
+        with patch.dict("os.environ", {"CLOUDFRONT_SECRET": "test-secret"}):
+            with patch("shared.security.verify_recaptcha", return_value=(True, 0.9, None)):
+                event = make_event(
+                    body=json.dumps({"recaptcha_token": "tok"}),
+                )
+                result = handler(event, None)
+        assert result["statusCode"] == 200

@@ -167,11 +167,11 @@ func receiveWithPIN(ctx context.Context, client *api.Client) error {
 		}
 	}
 
-	if verifyResp.ContentType == "text" {
+	filename := verifyResp.FileName
+	if verifyResp.ContentType == "text" || filename == "secret.txt" {
 		fmt.Println(string(plaintext))
 		return nil
 	}
-	filename := verifyResp.FileName
 	if filename == "" {
 		filename = "download"
 	}

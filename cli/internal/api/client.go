@@ -76,7 +76,7 @@ type UploadInitRequest struct {
 	ContentType   string `json:"content_type"`
 	FileSize      int64  `json:"file_size,omitempty"`
 	EncryptedText string `json:"encrypted_text,omitempty"`
-	TextSize      int    `json:"text_size,omitempty"`
+	TextSize      int    `json:"text_size,omitempty"` // original plaintext byte count for text secrets
 	TTL           string `json:"ttl"`
 	AccessMode    string `json:"access_mode"`
 	Salt          string `json:"salt,omitempty"`

@@ -113,6 +113,8 @@ func sendURLMode(ctx context.Context, client *api.Client, plaintext []byte, file
 	var encryptedKey, saltB64 string
 	var err error
 
+	isText := sendText != ""
+
 	if sendPassword {
 		password, err := readPassword("Enter password: ")
 		if err != nil {
@@ -150,21 +152,38 @@ func sendURLMode(ctx context.Context, client *api.Client, plaintext []byte, file
 		}
 	}
 
-	req := api.UploadInitRequest{
-		ContentType:  "file",
-		FileSize:     int64(len(ciphertext)),
-		TTL:          sendTTL,
-		AccessMode:   accessMode,
-		Salt:         saltB64,
-		EncryptedKey: encryptedKey,
+	var req api.UploadInitRequest
+	if isText {
+		req = api.UploadInitRequest{
+			ContentType:   "text",
+			EncryptedText: base64.StdEncoding.EncodeToString(ciphertext),
+			TextSize:      len(plaintext),
+			TTL:           sendTTL,
+			AccessMode:    accessMode,
+			Salt:          saltB64,
+			EncryptedKey:  encryptedKey,
+		}
+	} else {
+		req = api.UploadInitRequest{
+			ContentType:  "file",
+			FileSize:     int64(len(ciphertext)),
+			TTL:          sendTTL,
+			AccessMode:   accessMode,
+			Salt:         saltB64,
+			EncryptedKey: encryptedKey,
+		}
 	}
+
 	resp, err := client.UploadInit(ctx, req)
 	if err != nil {
 		return fmt.Errorf("upload init: %w", err)
 	}
 
-	if err = client.UploadToS3(ctx, resp.UploadURL, ciphertext); err != nil {
-		return fmt.Errorf("upload to S3: %w", err)
+	// Files go to S3; text is stored inline by the backend
+	if !isText {
+		if err = client.UploadToS3(ctx, resp.UploadURL, ciphertext); err != nil {
+			return fmt.Errorf("upload to S3: %w", err)
+		}
 	}
 
 	if sendJSON {

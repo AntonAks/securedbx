@@ -109,6 +109,10 @@ func receiveURLMode(ctx context.Context, client *api.Client, rawURL string) erro
 		}
 	}
 
+	if dlResp.ContentType == "text" {
+		fmt.Println(string(plaintext))
+		return nil
+	}
 	return saveOutput(plaintext, filename)
 }
 
@@ -163,6 +167,10 @@ func receiveWithPIN(ctx context.Context, client *api.Client) error {
 		}
 	}
 
+	if verifyResp.ContentType == "text" {
+		fmt.Println(string(plaintext))
+		return nil
+	}
 	filename := verifyResp.FileName
 	if filename == "" {
 		filename = "download"

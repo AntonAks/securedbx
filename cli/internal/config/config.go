@@ -31,6 +31,14 @@ func CFSecret() string {
 	return os.Getenv("SECUREDBX_CF_SECRET")
 }
 
+// FrontendURL returns the frontend base URL from env or default.
+func FrontendURL() string {
+	if v := os.Getenv("SECUREDBX_FRONTEND_URL"); v != "" {
+		return v
+	}
+	return "https://securedbx.com"
+}
+
 func configPath() (string, error) {
 	dir, err := os.UserConfigDir()
 	if err != nil {

@@ -7,7 +7,7 @@
         v-model="text"
         :placeholder="$t('upload.text.placeholder')"
         rows="8"
-        maxlength="1000"
+        maxlength="3000"
         class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-200 resize-vertical focus:outline-none focus:border-blue-500 mb-2"
       ></textarea>
       <p class="text-gray-600 dark:text-slate-400 text-sm text-right">

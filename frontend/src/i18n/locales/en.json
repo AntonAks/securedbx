@@ -99,8 +99,8 @@
       "ttl24h": "24 hours",
       "encryptUpload": "Encrypt & Upload",
       "encryptShare": "Encrypt & Share",
-      "textPlaceholder": "Enter your secret text (max 1000 characters)...",
-      "charCount": "{count} / 1000 characters",
+      "textPlaceholder": "Enter your secret text (max 3000 characters)...",
+      "charCount": "{count} / 3000 characters",
       "remove": "Remove",
       "clearAll": "Clear all",
       "filesCount": "{count} files ({size})",
@@ -124,8 +124,8 @@
     },
     "text": {
       "shareText": "Share Text Secret",
-      "placeholder": "Enter your secret text (max 1000 characters)...",
-      "charCount": "{count} / 1000 characters",
+      "placeholder": "Enter your secret text (max 3000 characters)...",
+      "charCount": "{count} / 3000 characters",
       "encryptShare": "Encrypt & Share"
     },
     "vault": {
@@ -361,7 +361,7 @@
       "q3": "Is SecureDBX really free?",
       "a3": "Yes, SecureDBX is completely free to use. There are no premium tiers, no ads, and no hidden costs.",
       "q4": "What can I share with SecureDBX?",
-      "a4html": "Two types of content: <strong class=\"text-gray-900 dark:text-slate-100\">Files</strong> (any file type up to 500MB) and <strong class=\"text-gray-900 dark:text-slate-100\">Text secrets</strong> (up to 1000 characters for passwords, API keys, notes, etc.)."
+      "a4html": "Two types of content: <strong class=\"text-gray-900 dark:text-slate-100\">Files</strong> (any file type up to 500MB) and <strong class=\"text-gray-900 dark:text-slate-100\">Text secrets</strong> (up to 3000 characters for passwords, API keys, notes, etc.)."
     },
     "security": {
       "heading": "Security & Privacy",
@@ -385,7 +385,7 @@
       "q3": "How long do files stay available?",
       "a3": "You choose when you upload: 1 hour, 12 hours, or 24 hours. After this time, files are automatically deleted, even if not downloaded.",
       "q4": "What's the difference between file sharing and text secrets?",
-      "a4": "Both are encrypted the same way. Files are for documents/images up to 500MB (downloaded as a file). Text secrets are for passwords/keys up to 1000 characters (displayed directly in browser with copy button).",
+      "a4": "Both are encrypted the same way. Files are for documents/images up to 500MB (downloaded as a file). Text secrets are for passwords/keys up to 3000 characters (displayed directly in browser with copy button).",
       "q5": "Where is the encryption key stored?",
       "a5": "In the URL fragment (the part after #). URL fragments are never sent to servers by browsers. The key exists only in the shareable link."
     },

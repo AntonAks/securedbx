@@ -48,7 +48,7 @@
     <div v-if="activeTab === 'text'">
       <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-6">{{ $t('upload.pin.shareText') }}</h2>
       <div class="mb-6">
-        <textarea v-model="textInput" :placeholder="$t('upload.pin.textPlaceholder')" rows="8" maxlength="1000"
+        <textarea v-model="textInput" :placeholder="$t('upload.pin.textPlaceholder')" rows="8" maxlength="3000"
           class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-200 resize-vertical focus:outline-none focus:border-blue-500 mb-2"></textarea>
         <p class="text-gray-600 dark:text-slate-400 text-sm text-right">{{ $t('upload.pin.charCount', { count: textInput.length }) }}</p>
       </div>
@@ -164,7 +164,7 @@ const pinValidationClass = computed(() => {
 const canUpload = computed(() => {
     if (!pinValid.value) return false;
     if (activeTab.value === 'file') return selectedFiles.value.length > 0;
-    return textInput.value.trim().length > 0 && textInput.value.trim().length <= 1000;
+    return textInput.value.trim().length > 0 && textInput.value.trim().length <= 3000;
 });
 
 function setFiles(files) {

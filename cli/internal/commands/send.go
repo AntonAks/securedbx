@@ -1,20 +1,16 @@
 package commands
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
-	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
-	"syscall"
-	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 
 	"github.com/securedbx/securedbx/cli/internal/api"
 	"github.com/securedbx/securedbx/cli/internal/auth"
@@ -23,30 +19,20 @@ import (
 )
 
 var (
-	sendText      string
-	sendPIN       bool
-	sendPINValue  string
-	sendPassword  bool
-	sendPassValue string
-	sendMulti     bool
-	sendTTL       string
-	sendJSON      bool
+	sendText     string
+	sendPINValue string
+	sendTTL      int
 )
 
 func NewSendCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "send [file ...]",
+		Use:   "send [file]",
 		Short: "Encrypt and upload a file or text secret",
 		RunE:  runSend,
 	}
 	cmd.Flags().StringVar(&sendText, "text", "", "Send text instead of file")
-	cmd.Flags().BoolVar(&sendPIN, "pin", false, "Use PIN mode")
-	cmd.Flags().StringVar(&sendPINValue, "pin-value", "", "PIN explicitly (4-8 digits)")
-	cmd.Flags().BoolVar(&sendPassword, "password", false, "Password-protect the file")
-	cmd.Flags().StringVar(&sendPassValue, "password-value", "", "Password explicitly")
-	cmd.Flags().BoolVar(&sendMulti, "multi", false, "Multi-access mode (use with --password)")
-	cmd.Flags().StringVar(&sendTTL, "ttl", "1h", "TTL: 5m, 1h, 12h, 24h, 3d, 7d")
-	cmd.Flags().BoolVar(&sendJSON, "json", false, "Output result as JSON")
+	cmd.Flags().StringVar(&sendPINValue, "pin-value", "", "PIN (4 chars a-z A-Z 0-9); auto-generated if omitted")
+	cmd.Flags().IntVar(&sendTTL, "ttl", 1, "Expiry in hours (1–24)")
 	return cmd
 }
 
@@ -56,8 +42,11 @@ func runSend(cmd *cobra.Command, args []string) error {
 	if sendText != "" && len(args) > 0 {
 		return fmt.Errorf("cannot use --text with file arguments")
 	}
-	if sendPIN && sendPassword {
-		return fmt.Errorf("cannot use --pin and --password together")
+	if len(args) > 1 {
+		return fmt.Errorf("only one file at a time is supported")
+	}
+	if sendTTL < 1 || sendTTL > 24 {
+		return fmt.Errorf("--ttl must be between 1 and 24")
 	}
 
 	unauthClient := api.New(config.BaseURL(), config.CFSecret(), "")
@@ -79,141 +68,10 @@ func runSend(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("read file: %w", err)
 		}
 		filename = filepath.Base(args[0])
-	} else if len(args) > 1 {
-		var entries []crypto.FileEntry
-		for _, path := range args {
-			data, err := os.ReadFile(path)
-			if err != nil {
-				return fmt.Errorf("read %s: %w", path, err)
-			}
-			entries = append(entries, crypto.FileEntry{Name: filepath.Base(path), Data: data})
-		}
-		plaintext, err = crypto.BundleFiles(entries)
-		if err != nil {
-			return fmt.Errorf("bundle files: %w", err)
-		}
-		filename = "archive.zip"
 	} else {
-		return fmt.Errorf("provide at least one file or use --text")
+		return fmt.Errorf("provide a file or use --text")
 	}
 
-	if sendPIN {
-		return sendPINMode(ctx, client, plaintext, filename)
-	}
-	return sendURLMode(ctx, client, plaintext, filename)
-}
-
-func sendURLMode(ctx context.Context, client *api.Client, plaintext []byte, filename string) error {
-	accessMode := "one_time"
-	if sendMulti {
-		accessMode = "multi"
-	}
-
-	var ciphertext, key []byte
-	var encryptedKey, saltB64 string
-	var err error
-
-	isText := sendText != ""
-
-	if sendPassword {
-		password, err := readPassword("Enter password: ")
-		if err != nil {
-			return err
-		}
-
-		salt, err := crypto.GenerateSalt()
-		if err != nil {
-			return fmt.Errorf("generate salt: %w", err)
-		}
-		saltB64 = base64.StdEncoding.EncodeToString(salt)
-
-		wrapKey := crypto.DeriveKeyFromPassword(password, salt)
-
-		dataKey := make([]byte, 32)
-		if _, err = io.ReadFull(rand.Reader, dataKey); err != nil {
-			return fmt.Errorf("generate data key: %w", err)
-		}
-
-		ciphertext, err = crypto.EncryptWithKey(plaintext, dataKey)
-		if err != nil {
-			return fmt.Errorf("encrypt: %w", err)
-		}
-
-		wrappedKey, err := crypto.EncryptKey(dataKey, wrapKey)
-		if err != nil {
-			return fmt.Errorf("wrap key: %w", err)
-		}
-		encryptedKey = base64.StdEncoding.EncodeToString(wrappedKey)
-		accessMode = "multi"
-	} else {
-		ciphertext, key, err = crypto.Encrypt(plaintext)
-		if err != nil {
-			return fmt.Errorf("encrypt: %w", err)
-		}
-	}
-
-	var req api.UploadInitRequest
-	if isText {
-		req = api.UploadInitRequest{
-			ContentType:   "text",
-			EncryptedText: base64.StdEncoding.EncodeToString(ciphertext),
-			TextSize:      len(plaintext),
-			TTL:           sendTTL,
-			AccessMode:    accessMode,
-			Salt:          saltB64,
-			EncryptedKey:  encryptedKey,
-		}
-	} else {
-		req = api.UploadInitRequest{
-			ContentType:  "file",
-			FileSize:     int64(len(ciphertext)),
-			TTL:          sendTTL,
-			AccessMode:   accessMode,
-			Salt:         saltB64,
-			EncryptedKey: encryptedKey,
-		}
-	}
-
-	resp, err := client.UploadInit(ctx, req)
-	if err != nil {
-		return fmt.Errorf("upload init: %w", err)
-	}
-
-	// Files go to S3; text is stored inline by the backend
-	if !isText {
-		if err = client.UploadToS3(ctx, resp.UploadURL, ciphertext); err != nil {
-			return fmt.Errorf("upload to S3: %w", err)
-		}
-	}
-
-	if sendJSON {
-		if sendPassword {
-			fmt.Printf(`{"mode":"password","file_id":%q,"expires_at":%d}`+"\n", resp.FileID, resp.ExpiresAt)
-		} else {
-			shareURL := buildShareURL(resp.FileID, key, filename)
-			fmt.Printf(`{"mode":"url","url":%q,"file_id":%q,"expires_at":%d}`+"\n", shareURL, resp.FileID, resp.ExpiresAt)
-		}
-		return nil
-	}
-
-	green := lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Bold(true)
-	yellow := lipgloss.NewStyle().Foreground(lipgloss.Color("3"))
-	expiry := time.Unix(resp.ExpiresAt, 0).Format("2006-01-02 15:04 MST")
-
-	if sendPassword {
-		fmt.Printf("\n%s Password-protected file ready!\n", green.Render("✓"))
-		fmt.Printf("  File ID: %s  |  Expires: %s\n", resp.FileID, expiry)
-		fmt.Printf("  %s\n\n", yellow.Render("Share the File ID and password separately."))
-	} else {
-		shareURL := buildShareURL(resp.FileID, key, filename)
-		fmt.Printf("\n%s Done! Share this link (one-time, %s):\n", green.Render("✓"), sendTTL)
-		fmt.Printf("  %s\n\n", shareURL)
-		fmt.Printf("  %s\n\n", yellow.Render("⚠  Link contains the key. Keep it private."))
-	}
-	return nil
-}
-
-func sendPINMode(ctx context.Context, client *api.Client, plaintext []byte, filename string) error {
 	pin := sendPINValue
 	if pin == "" {
 		pin = generatePIN()
@@ -224,13 +82,13 @@ func sendPINMode(ctx context.Context, client *api.Client, plaintext []byte, file
 		FileSize:    int64(len(plaintext)),
 		PIN:         pin,
 		FileName:    filename,
-		TTL:         sendTTL,
+		TTL:         sendTTL * 60,
 		AccessMode:  "one_time",
 	}
 
 	resp, err := client.PINUpload(ctx, req)
 	if err != nil {
-		return fmt.Errorf("PIN upload init: %w", err)
+		return fmt.Errorf("upload init: %w", err)
 	}
 
 	saltBytes, err := hexDecodeString(resp.Salt)
@@ -244,46 +102,35 @@ func sendPINMode(ctx context.Context, client *api.Client, plaintext []byte, file
 		return fmt.Errorf("encrypt: %w", err)
 	}
 
-	if err = client.UploadToS3(ctx, resp.UploadURL, ciphertext); err != nil {
+	pr := newProgressReader(bytes.NewReader(ciphertext), int64(len(ciphertext)), "Uploading")
+	if err = client.UploadToS3(ctx, resp.UploadURL, pr, int64(len(ciphertext))); err != nil {
 		return fmt.Errorf("S3 upload: %w", err)
 	}
+	clearProgress()
 
-	expiry := time.Unix(resp.ExpiresAt, 0).Format("2006-01-02 15:04 MST")
-
-	if sendJSON {
-		fmt.Printf(`{"mode":"pin","file_id":%q,"pin":%q,"expires_at":%d}`+"\n", resp.FileID, pin, resp.ExpiresAt)
-		return nil
-	}
-
-	green := lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Bold(true)
-	fmt.Printf("\n%s Done!\n", green.Render("✓"))
-	fmt.Printf("  File ID: %s  |  PIN: %s  |  Expires: %s\n\n", resp.FileID, pin, expiry)
-	return nil
-}
-
-func buildShareURL(fileID string, key []byte, filename string) string {
-	keyStr := crypto.KeyToBase64URL(key)
-	return fmt.Sprintf("%s/#/download?id=%s&key=%s&name=%s", config.FrontendURL(), fileID, keyStr, urlEncode(filename))
-}
-
-func readPassword(prompt string) (string, error) {
-	if sendPassValue != "" {
-		return sendPassValue, nil
-	}
-	fmt.Fprint(os.Stderr, prompt)
-	b, err := term.ReadPassword(int(syscall.Stdin))
-	fmt.Fprintln(os.Stderr)
-	return string(b), err
+	return printJSON(map[string]any{
+		"file_id":    resp.FileID,
+		"pin":        pin,
+		"expires_at": resp.ExpiresAt,
+	})
 }
 
 func generatePIN() string {
-	b := make([]byte, 1)
-	rand.Reader.Read(b)
-	return fmt.Sprintf("%04d", int(b[0])%10000)
-}
-
-func urlEncode(s string) string {
-	return strings.NewReplacer(" ", "%20", "#", "%23").Replace(s)
+	const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const max = byte(256 - 256%len(charset))
+	pin := make([]byte, 4)
+	i := 0
+	for i < 4 {
+		var b [1]byte
+		if _, err := io.ReadFull(rand.Reader, b[:]); err != nil {
+			panic(fmt.Sprintf("crypto/rand failed: %v", err))
+		}
+		if b[0] < max {
+			pin[i] = charset[int(b[0])%len(charset)]
+			i++
+		}
+	}
+	return string(pin)
 }
 
 func hexDecodeString(s string) ([]byte, error) {
@@ -295,4 +142,10 @@ func hexDecodeString(s string) ([]byte, error) {
 		}
 	}
 	return b, nil
+}
+
+func printJSON(v any) error {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(v)
 }

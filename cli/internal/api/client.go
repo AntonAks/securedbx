@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -114,7 +115,7 @@ type PINUploadRequest struct {
 	FileSize    int64  `json:"file_size,omitempty"`
 	PIN         string `json:"pin"`
 	FileName    string `json:"file_name,omitempty"`
-	TTL         string `json:"ttl"`
+	TTL         any    `json:"ttl"`
 	AccessMode  string `json:"access_mode,omitempty"`
 }
 
@@ -226,12 +227,13 @@ func (c *Client) PINVerify(ctx context.Context, req PINVerifyRequest) (PINVerify
 	return decode[PINVerifyResponse](resp)
 }
 
-func (c *Client) UploadToS3(ctx context.Context, url string, data []byte) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewReader(data))
+func (c *Client) UploadToS3(ctx context.Context, url string, body io.Reader, size int64) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, body)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/octet-stream")
+	req.ContentLength = size
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -243,7 +245,7 @@ func (c *Client) UploadToS3(ctx context.Context, url string, data []byte) error 
 	return nil
 }
 
-func (c *Client) DownloadFromS3(ctx context.Context, url string) ([]byte, error) {
+func (c *Client) DownloadFromS3(ctx context.Context, url string, onProgress func(read, total int64)) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -256,9 +258,25 @@ func (c *Client) DownloadFromS3(ctx context.Context, url string) ([]byte, error)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("S3 download HTTP %d", resp.StatusCode)
 	}
+	total := resp.ContentLength
 	var buf bytes.Buffer
-	if _, err = buf.ReadFrom(resp.Body); err != nil {
-		return nil, err
+	tmp := make([]byte, 32*1024)
+	var read int64
+	for {
+		n, err := resp.Body.Read(tmp)
+		if n > 0 {
+			buf.Write(tmp[:n])
+			read += int64(n)
+			if onProgress != nil {
+				onProgress(read, total)
+			}
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
 	return buf.Bytes(), nil
 }

@@ -1,14 +1,14 @@
 version: 2
 
-project_name: securedbx
+project_name: sdbx
 
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - main: ./cmd/securedbx
-    binary: securedbx
+  - main: ./cmd/sdbx
+    binary: sdbx
     env:
       - CGO_ENABLED=0
     goos:
@@ -35,11 +35,11 @@ checksum:
 brews:
   - repository:
       owner: securedbx
-      name: homebrew-securedbx
+      name: homebrew-sdbx
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: "https://securedbx.com"
     description: "Zero-knowledge file sharing CLI"
     install: |
-      bin.install "securedbx"
+      bin.install "sdbx"
     test: |
-      system "#{bin}/securedbx --version"
+      system "#{bin}/sdbx --version"

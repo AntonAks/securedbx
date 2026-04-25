@@ -53,13 +53,13 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     if not item or int(time.time()) > item.get("expires_at", 0):
         return _error("invalid or expired challenge")
 
-    # Delete challenge (single use)
-    table.delete_item(Key={"pk": f"challenge#{challenge}"})
-
-    # Verify PoW solution
+    # Verify PoW solution before consuming the challenge
     h = hashlib.sha256(f"{challenge}{nonce}".encode()).hexdigest()
     if not h.startswith(prefix):
         return _error("invalid PoW solution")
+
+    # Delete challenge (single use) only after successful verification
+    table.delete_item(Key={"pk": f"challenge#{challenge}"})
 
     # Issue API key
     api_key = f"sdbx_cli_{secrets.token_hex(16)}"

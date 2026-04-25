@@ -62,7 +62,7 @@ func decode[T any](resp *http.Response) (T, error) {
 		var errBody struct {
 			Error string `json:"error"`
 		}
-		json.NewDecoder(resp.Body).Decode(&errBody)
+		_ = json.NewDecoder(resp.Body).Decode(&errBody)
 		return result, fmt.Errorf("HTTP %d: %s", resp.StatusCode, errBody.Error)
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {

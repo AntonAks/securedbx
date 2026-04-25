@@ -94,10 +94,10 @@ func TestDeriveKeyFromPassword(t *testing.T) {
 
 func TestEncryptKeyRoundTrip(t *testing.T) {
 	dataKey := make([]byte, 32)
-	rand.Read(dataKey)
+	_, _ = rand.Read(dataKey)
 
 	wrapKey := make([]byte, 32)
-	rand.Read(wrapKey)
+	_, _ = rand.Read(wrapKey)
 
 	wrapped, err := crypto.EncryptKey(dataKey, wrapKey)
 	require.NoError(t, err)
@@ -109,15 +109,15 @@ func TestEncryptKeyRoundTrip(t *testing.T) {
 
 func TestEncryptKeyWrongWrapKey(t *testing.T) {
 	dataKey := make([]byte, 32)
-	rand.Read(dataKey)
+	_, _ = rand.Read(dataKey)
 	wrapKey := make([]byte, 32)
-	rand.Read(wrapKey)
+	_, _ = rand.Read(wrapKey)
 
 	wrapped, err := crypto.EncryptKey(dataKey, wrapKey)
 	require.NoError(t, err)
 
 	badKey := make([]byte, 32)
-	rand.Read(badKey)
+	_, _ = rand.Read(badKey)
 	_, err = crypto.DecryptKey(wrapped, badKey)
 	assert.Error(t, err)
 }

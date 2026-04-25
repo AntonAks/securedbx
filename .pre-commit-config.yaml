@@ -19,6 +19,12 @@ repos:
         entry: bash -c 'cd cli && go build ./...'
         files: ^cli/.*\.go$
         pass_filenames: false
+      - id: golangci-lint
+        name: golangci-lint
+        language: system
+        entry: bash -c 'cd cli && $(go env GOPATH)/bin/golangci-lint run ./...'
+        files: ^cli/.*\.go$
+        pass_filenames: false
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.9.10

@@ -23,7 +23,7 @@ func TestUploadInit(t *testing.T) {
 		assert.Equal(t, "/upload/init", r.URL.Path)
 		assert.Equal(t, "test-api-key", r.Header.Get("X-Cli-Api-Key"))
 
-		json.NewEncoder(w).Encode(api.UploadInitResponse{
+		_ = json.NewEncoder(w).Encode(api.UploadInitResponse{
 			FileID:    "abc123",
 			UploadURL: "https://s3.example.com/upload",
 			ExpiresAt: 9999999999,
@@ -46,7 +46,7 @@ func TestDownload(t *testing.T) {
 		assert.Equal(t, "POST", r.Method)
 		assert.Equal(t, "/files/abc123/download", r.URL.Path)
 
-		json.NewEncoder(w).Encode(api.DownloadResponse{
+		_ = json.NewEncoder(w).Encode(api.DownloadResponse{
 			ContentType: "file",
 			DownloadURL: "https://s3.example.com/file",
 			FileSize:    1024,
@@ -63,7 +63,7 @@ func TestDownload(t *testing.T) {
 func TestHTTPError(t *testing.T) {
 	client, _ := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]string{"error": "File not found"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "File not found"})
 	})
 
 	_, err := client.Download(t.Context(), "missing")
@@ -74,7 +74,7 @@ func TestHTTPError(t *testing.T) {
 func TestPINUpload(t *testing.T) {
 	client, _ := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/pin/upload", r.URL.Path)
-		json.NewEncoder(w).Encode(api.PINUploadResponse{
+		_ = json.NewEncoder(w).Encode(api.PINUploadResponse{
 			FileID:    "123456",
 			Salt:      "a3f8c2d1e4b5a6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1",
 			UploadURL: "https://s3.example.com/pin",

@@ -219,6 +219,27 @@ resource "aws_api_gateway_resource" "pin_verify" {
   path_part   = "verify"
 }
 
+# /auth resource
+resource "aws_api_gateway_resource" "auth" {
+  rest_api_id = aws_api_gateway_rest_api.main.id
+  parent_id   = aws_api_gateway_rest_api.main.root_resource_id
+  path_part   = "auth"
+}
+
+# /auth/init
+resource "aws_api_gateway_resource" "auth_init" {
+  rest_api_id = aws_api_gateway_rest_api.main.id
+  parent_id   = aws_api_gateway_resource.auth.id
+  path_part   = "init"
+}
+
+# /auth/confirm
+resource "aws_api_gateway_resource" "auth_confirm" {
+  rest_api_id = aws_api_gateway_rest_api.main.id
+  parent_id   = aws_api_gateway_resource.auth.id
+  path_part   = "confirm"
+}
+
 # CORS configuration for all resources
 module "cors_upload_init" {
   source = "./modules/cors"
@@ -278,6 +299,18 @@ module "cors_pin_verify" {
   source      = "./modules/cors"
   api_id      = aws_api_gateway_rest_api.main.id
   resource_id = aws_api_gateway_resource.pin_verify.id
+}
+
+module "cors_auth_init" {
+  source      = "./modules/cors"
+  api_id      = aws_api_gateway_rest_api.main.id
+  resource_id = aws_api_gateway_resource.auth_init.id
+}
+
+module "cors_auth_confirm" {
+  source      = "./modules/cors"
+  api_id      = aws_api_gateway_rest_api.main.id
+  resource_id = aws_api_gateway_resource.auth_confirm.id
 }
 
 # Lambda Functions
@@ -653,6 +686,84 @@ module "lambda_pin_verify" {
   tags = var.tags
 }
 
+# --- auth_init Lambda ---
+
+module "lambda_auth_init" {
+  source = "./modules/lambda"
+
+  function_name = "${var.project_name}-${var.environment}-auth-init"
+  handler       = "handler.handler"
+  runtime       = var.lambda_runtime
+  timeout       = var.lambda_timeout
+  memory_size   = var.lambda_memory_size
+  source_dir    = "${path.root}/../../../backend/lambdas/auth_init"
+  layers        = [aws_lambda_layer_version.dependencies.arn]
+
+  environment_variables = {
+    AUTH_TABLE_NAME = aws_dynamodb_table.auth.name
+    POW_DIFFICULTY  = "4"
+  }
+
+  iam_policy_statements = [
+    {
+      effect    = "Allow"
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.auth.arn]
+    }
+  ]
+
+  tags = var.tags
+}
+
+# --- auth_confirm Lambda ---
+
+module "lambda_auth_confirm" {
+  source = "./modules/lambda"
+
+  function_name = "${var.project_name}-${var.environment}-auth-confirm"
+  handler       = "handler.handler"
+  runtime       = var.lambda_runtime
+  timeout       = var.lambda_timeout
+  memory_size   = var.lambda_memory_size
+  source_dir    = "${path.root}/../../../backend/lambdas/auth_confirm"
+  layers        = [aws_lambda_layer_version.dependencies.arn]
+
+  environment_variables = {
+    AUTH_TABLE_NAME = aws_dynamodb_table.auth.name
+    POW_DIFFICULTY  = "4"
+  }
+
+  iam_policy_statements = [
+    {
+      effect    = "Allow"
+      actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem", "dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.auth.arn]
+    }
+  ]
+
+  tags = var.tags
+}
+
+# --- DynamoDB table for CLI auth (challenges + API keys) ---
+
+resource "aws_dynamodb_table" "auth" {
+  name           = "${var.project_name}-${var.environment}-cli-auth"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "pk"
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "expires_at"
+    enabled        = true
+  }
+
+  tags = var.tags
+}
+
 # API Gateway Methods
 # POST /upload/init
 resource "aws_api_gateway_method" "upload_init_post" {
@@ -815,6 +926,40 @@ resource "aws_api_gateway_integration" "pin_verify" {
   uri                     = module.lambda_pin_verify.invoke_arn
 }
 
+# POST /auth/init
+resource "aws_api_gateway_method" "auth_init_post" {
+  rest_api_id   = aws_api_gateway_rest_api.main.id
+  resource_id   = aws_api_gateway_resource.auth_init.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "auth_init" {
+  rest_api_id             = aws_api_gateway_rest_api.main.id
+  resource_id             = aws_api_gateway_resource.auth_init.id
+  http_method             = aws_api_gateway_method.auth_init_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.lambda_auth_init.invoke_arn
+}
+
+# POST /auth/confirm
+resource "aws_api_gateway_method" "auth_confirm_post" {
+  rest_api_id   = aws_api_gateway_rest_api.main.id
+  resource_id   = aws_api_gateway_resource.auth_confirm.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "auth_confirm" {
+  rest_api_id             = aws_api_gateway_rest_api.main.id
+  resource_id             = aws_api_gateway_resource.auth_confirm.id
+  http_method             = aws_api_gateway_method.auth_confirm_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.lambda_auth_confirm.invoke_arn
+}
+
 # Lambda permissions for API Gateway
 resource "aws_lambda_permission" "upload_init" {
   statement_id  = "AllowAPIGatewayInvoke"
@@ -888,6 +1033,22 @@ resource "aws_lambda_permission" "pin_verify" {
   source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/*/*"
 }
 
+resource "aws_lambda_permission" "auth_init" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda_auth_init.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "auth_confirm" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda_auth_confirm.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/*/*"
+}
+
 # API Gateway Deployment
 resource "aws_api_gateway_deployment" "main" {
   rest_api_id = aws_api_gateway_rest_api.main.id
@@ -913,6 +1074,10 @@ resource "aws_api_gateway_deployment" "main" {
       aws_api_gateway_integration.pin_initiate.id,
       aws_api_gateway_method.pin_verify_post.id,
       aws_api_gateway_integration.pin_verify.id,
+      aws_api_gateway_method.auth_init_post.id,
+      aws_api_gateway_integration.auth_init.id,
+      aws_api_gateway_method.auth_confirm_post.id,
+      aws_api_gateway_integration.auth_confirm.id,
       # Force redeployment - increment this number when needed
       "v6",
     ]))
@@ -932,6 +1097,8 @@ resource "aws_api_gateway_deployment" "main" {
     aws_api_gateway_integration.pin_upload,
     aws_api_gateway_integration.pin_initiate,
     aws_api_gateway_integration.pin_verify,
+    aws_api_gateway_integration.auth_init,
+    aws_api_gateway_integration.auth_confirm,
   ]
 }
 

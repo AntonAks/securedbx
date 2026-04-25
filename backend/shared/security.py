@@ -273,3 +273,80 @@ def hash_ip_secure(ip: str) -> str:
     """
     salt = get_ip_hash_salt()
     return hmac.new(salt.encode(), ip.encode(), hashlib.sha256).hexdigest()
+
+
+def verify_cli_api_key(event: dict[str, Any]) -> bool:
+    """Verify CLI API key from X-CLI-API-Key header against DynamoDB."""
+    import time as _time
+
+    headers = event.get("headers", {})
+    headers_lower = {k.lower(): v for k, v in headers.items()}
+    api_key = headers_lower.get("x-cli-api-key", "")
+
+    if not api_key:
+        return False
+
+    table_name = os.environ.get("AUTH_TABLE_NAME")
+    if not table_name:
+        logger.warning("AUTH_TABLE_NAME not configured — skipping CLI key check")
+        return True  # allow in dev if not configured
+
+    try:
+        dynamodb = boto3.resource("dynamodb")
+        table = dynamodb.Table(table_name)
+        response = table.get_item(Key={"pk": f"apikey#{api_key}"})
+        item = response.get("Item")
+        if not item:
+            return False
+        if int(_time.time()) > item.get("expires_at", 0):
+            return False
+        return True
+    except Exception as e:
+        logger.error(f"CLI API key verification error: {e}")
+        return False
+
+
+def require_cloudfront_and_auth(handler: Callable) -> Callable:
+    """
+    Decorator accepting either reCAPTCHA (browser) or CLI API Key.
+
+    Browser path: checks X-Origin-Verify + recaptcha_token in body.
+    CLI path: checks X-Origin-Verify + X-CLI-API-Key header.
+    """
+
+    @wraps(handler)
+    def wrapper(event: dict[str, Any], context: Any) -> dict[str, Any]:
+        from shared.response import error_response
+
+        if not verify_cloudfront_origin(event):
+            return error_response("Direct API access not allowed", 403)
+
+        headers = event.get("headers", {})
+        headers_lower = {k.lower(): v for k, v in headers.items()}
+
+        if headers_lower.get("x-cli-api-key"):
+            # CLI path — API key replaces reCAPTCHA
+            if not verify_cli_api_key(event):
+                return error_response("Invalid or expired CLI API key", 403)
+            event["_security_verified"] = True
+            event["_recaptcha_score"] = None
+        else:
+            # Browser path — reCAPTCHA
+            try:
+                body = json.loads(event.get("body", "{}"))
+            except json.JSONDecodeError:
+                return error_response("Invalid JSON in request body", 400)
+
+            recaptcha_token = body.get("recaptcha_token")
+            source_ip = event.get("requestContext", {}).get("identity", {}).get("sourceIp")
+            is_valid, score, error_msg = verify_recaptcha(recaptcha_token, source_ip)
+
+            if not is_valid:
+                return error_response(error_msg or "Bot activity detected", 403)
+
+            event["_security_verified"] = True
+            event["_recaptcha_score"] = score
+
+        return handler(event, context)
+
+    return wrapper

@@ -6,7 +6,7 @@ import os
 import secrets
 from typing import Final
 
-from .constants import PIN_SALT_BYTES
+from .constants import PIN_PBKDF2_ITERATIONS, PIN_SALT_BYTES
 
 _PIN_FILE_ID_MAX: Final[int] = 999999
 
@@ -17,8 +17,13 @@ def generate_salt() -> str:
 
 
 def hash_pin(pin: str, salt: str) -> str:
-    """Hash PIN with salt using SHA-256. Returns 64-char hex hash."""
-    return hashlib.sha256((pin + salt).encode("utf-8")).hexdigest()
+    """Hash PIN with salt using PBKDF2-HMAC-SHA256. Returns 64-char hex hash."""
+    return hashlib.pbkdf2_hmac(
+        "sha256",
+        pin.encode("utf-8"),
+        bytes.fromhex(salt),
+        PIN_PBKDF2_ITERATIONS,
+    ).hex()
 
 
 def verify_pin_hash(pin: str, salt: str, expected_hash: str) -> bool:

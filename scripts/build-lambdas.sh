@@ -25,6 +25,8 @@ LAMBDAS=(
   "pin_upload_init:pin-upload-init"
   "pin_initiate:pin-initiate"
   "pin_verify:pin-verify"
+  "auth_init:auth-init"
+  "auth_confirm:auth-confirm"
 )
 
 # Environment (dev or prod)

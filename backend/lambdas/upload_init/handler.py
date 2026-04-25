@@ -16,7 +16,7 @@ from shared.exceptions import ValidationError
 from shared.request_helpers import get_source_ip, parse_json_body
 from shared.response import error_response, success_response
 from shared.s3 import generate_upload_url
-from shared.security import hash_ip_secure, require_cloudfront_and_recaptcha
+from shared.security import hash_ip_secure, require_cloudfront_and_auth
 from shared.validation import (
     validate_access_mode,
     validate_encrypted_key,
@@ -50,7 +50,7 @@ def ttl_to_seconds(ttl) -> int:
     return int(ttl) * 60
 
 
-@require_cloudfront_and_recaptcha
+@require_cloudfront_and_auth
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
     Initialize file or text secret upload.

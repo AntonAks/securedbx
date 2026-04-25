@@ -14,7 +14,7 @@ from shared.exceptions import (
 )
 from shared.request_helpers import parse_json_body
 from shared.response import error_response, success_response
-from shared.security import require_cloudfront_and_recaptcha
+from shared.security import require_cloudfront_and_auth
 from shared.validation import validate_pin_file_id
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ logger.setLevel(logging.INFO)
 TABLE_NAME = os.environ.get("TABLE_NAME")
 
 
-@require_cloudfront_and_recaptcha
+@require_cloudfront_and_auth
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
     Initiate a 60-second PIN entry session.

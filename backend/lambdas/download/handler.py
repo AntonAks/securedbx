@@ -16,7 +16,7 @@ from shared.exceptions import (
 from shared.request_helpers import get_path_parameter
 from shared.response import error_response, success_response
 from shared.s3 import generate_download_url
-from shared.security import require_cloudfront_and_recaptcha
+from shared.security import require_cloudfront_and_auth
 from shared.validation import validate_file_id
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ BUCKET_NAME = os.environ.get("BUCKET_NAME")
 TABLE_NAME = os.environ.get("TABLE_NAME")
 
 
-@require_cloudfront_and_recaptcha
+@require_cloudfront_and_auth
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
     Reserve file or text secret for download and return content.

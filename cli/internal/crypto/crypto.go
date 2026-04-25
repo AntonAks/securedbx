@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	KeySize          = 32    // 256 bits
-	NonceSize        = 12    // 96 bits
+	KeySize          = 32 // 256 bits
+	NonceSize        = 12 // 96 bits
 	pbkdf2Iterations = 100000
 )
 

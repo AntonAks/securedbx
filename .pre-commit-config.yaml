@@ -1,4 +1,25 @@
 repos:
+  - repo: local
+    hooks:
+      - id: go-fmt
+        name: go fmt
+        language: system
+        entry: bash -c 'cd cli && out=$(gofmt -l .); if [ -n "$out" ]; then gofmt -w . && echo "Reformatted:$out" && exit 1; fi'
+        files: ^cli/.*\.go$
+        pass_filenames: false
+      - id: go-vet
+        name: go vet
+        language: system
+        entry: bash -c 'cd cli && go vet ./...'
+        files: ^cli/.*\.go$
+        pass_filenames: false
+      - id: go-build
+        name: go build
+        language: system
+        entry: bash -c 'cd cli && go build ./...'
+        files: ^cli/.*\.go$
+        pass_filenames: false
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.9.10
     hooks:

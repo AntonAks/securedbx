@@ -201,6 +201,78 @@
 
 ---
 
+## CLI
+
+`sdbx` is a command-line client for securedbx.com. It encrypts your files and secrets locally before uploading — the server never sees your data.
+
+### Installation
+
+Download the binary for your platform from [Releases](https://github.com/AntonAks/securedbx/releases):
+
+```bash
+# Linux (amd64)
+curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_linux_amd64.tar.gz | tar xz
+sudo mv sdbx /usr/local/bin/
+
+# macOS (Apple Silicon)
+curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_darwin_arm64.tar.gz | tar xz
+sudo mv sdbx /usr/local/bin/
+
+# macOS (Intel)
+curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_darwin_amd64.tar.gz | tar xz
+sudo mv sdbx /usr/local/bin/
+```
+
+### Usage
+
+**Send a file:**
+```bash
+sdbx send document.pdf
+# {"file_id": "482973", "pin": "aB3x", "expires_at": 1234567890}
+```
+
+**Send a text secret:**
+```bash
+sdbx send --text "my secret password"
+# {"file_id": "736104", "pin": "Tz9k", "expires_at": 1234567890}
+```
+
+**Receive a file or secret:**
+```bash
+sdbx receive 482973
+# Enter PIN: ****
+# {"type": "file", "path": "./document.pdf"}
+```
+
+**Options for `send`:**
+```
+--text "..."       Send text instead of a file
+--ttl 1-24         Expiry in hours (default: 1)
+--pin-value xxxx   Custom PIN (4 chars, a-z A-Z 0-9); auto-generated if omitted
+```
+
+### How it works
+
+1. CLI generates a random 4-character PIN (or uses `--pin-value`)
+2. A key is derived from PIN + server salt using PBKDF2-HMAC-SHA256 (100k iterations)
+3. Content is encrypted locally with AES-256-GCM
+4. Encrypted data is uploaded — the server never sees the original content or the PIN
+5. Recipient uses `file_id` + PIN to decrypt on their side
+
+The recipient can download via CLI or the web UI at [securedbx.com](https://securedbx.com).
+
+### Configuration
+
+By default, the CLI connects to `https://securedbx.com/prod`. Override with environment variables:
+
+```bash
+export SECUREDBX_BASE_URL="https://securedbx.com/prod"  # API endpoint
+```
+
+API keys are obtained automatically via Proof-of-Work challenge and cached in `~/.config/securedbx/config.json` (24h TTL).
+
+---
+
 ## Development
 
 ### Prerequisites
@@ -274,6 +346,15 @@ make build-frontend
 
 ```
 securedbx/
+├── cli/                   # Go CLI client (sdbx)
+│   ├── cmd/sdbx/          # Entry point
+│   ├── internal/
+│   │   ├── api/           # API client
+│   │   ├── auth/          # PoW auth + API key lifecycle
+│   │   ├── commands/      # send, receive commands
+│   │   ├── config/        # Config and env vars
+│   │   └── crypto/        # AES-256-GCM, PBKDF2, ZIP bundling
+│   └── go.mod
 ├── backend/
 │   ├── lambdas/           # 10 Lambda functions
 │   │   ├── upload_init/
@@ -406,6 +487,7 @@ Planned features for securedbx:
 - ✅ **Vault (Password Protection)** - Password-protected multi-access sharing with PBKDF2 key derivation
 - ✅ **PIN Code Sharing** - Share via numeric PIN with PBKDF2 key derivation and configurable access mode
 - ✅ **Short URLs** - Shorter file IDs for cleaner links
+- ✅ **CLI Client** - Command-line tool (`sdbx`) for sending and receiving encrypted files/secrets
 - 📋 **IP/Geo Restriction** - Restrict downloads by country or IP
 - 📋 **Self-destructing Voice Message** - Encrypted audio messages
 - 📋 **Dead Man's Switch** - Auto-share if user doesn't check in

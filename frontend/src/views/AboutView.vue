@@ -154,6 +154,61 @@
       </ul>
     </section>
 
+    <!-- CLI -->
+    <section class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8 mb-6">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">{{ $t('about.cli.heading') }}</h2>
+      <p class="text-gray-600 dark:text-slate-300 leading-relaxed mb-6">{{ $t('about.cli.description') }}</p>
+
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">{{ $t('about.cli.installHeading') }}</h3>
+      <div class="space-y-4 mb-6">
+        <div>
+          <p class="text-sm text-gray-500 dark:text-slate-400 mb-1.5">{{ $t('about.cli.macArm') }}</p>
+          <div class="relative">
+            <button @click="copyCode(cliCode.macArm, 'macArm')"
+              class="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors">
+              {{ copiedKey === 'macArm' ? $t('share.copyDone') : $t('share.copy') }}
+            </button>
+            <pre class="bg-gray-900 rounded-lg px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto"><code>curl -L https://github.com/AntonAks/sdbx/releases/latest/download/sdbx_darwin_arm64.tar.gz | tar xz
+sudo mv sdbx /usr/local/bin/</code></pre>
+          </div>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-slate-400 mb-1.5">{{ $t('about.cli.macIntel') }}</p>
+          <div class="relative">
+            <button @click="copyCode(cliCode.macIntel, 'macIntel')"
+              class="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors">
+              {{ copiedKey === 'macIntel' ? $t('share.copyDone') : $t('share.copy') }}
+            </button>
+            <pre class="bg-gray-900 rounded-lg px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto"><code>curl -L https://github.com/AntonAks/sdbx/releases/latest/download/sdbx_darwin_amd64.tar.gz | tar xz
+sudo mv sdbx /usr/local/bin/</code></pre>
+          </div>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-slate-400 mb-1.5">{{ $t('about.cli.linux') }}</p>
+          <div class="relative">
+            <button @click="copyCode(cliCode.linux, 'linux')"
+              class="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors">
+              {{ copiedKey === 'linux' ? $t('share.copyDone') : $t('share.copy') }}
+            </button>
+            <pre class="bg-gray-900 rounded-lg px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto"><code>curl -L https://github.com/AntonAks/sdbx/releases/latest/download/sdbx_linux_amd64.tar.gz | tar xz
+sudo mv sdbx /usr/local/bin/</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">{{ $t('about.cli.usageHeading') }}</h3>
+      <pre class="bg-gray-900 rounded-lg px-4 py-4 text-sm text-green-400 font-mono overflow-x-auto mb-6"><code>sdbx send report.pdf              # encrypt and upload a file
+sdbx send --text "my api key"     # encrypt and upload text
+sdbx receive 482973               # download by 6-digit code
+# Enter PIN: ****</code></pre>
+
+      <div class="text-center">
+        <a href="https://github.com/AntonAks/sdbx/releases" target="_blank" rel="noopener noreferrer" class="btn-outline btn-auto inline-block">
+          {{ $t('about.cli.releasesLink') }}
+        </a>
+      </div>
+    </section>
+
     <!-- Limitations -->
     <section class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8 mb-6">
       <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">{{ $t('about.limitations.heading') }}</h2>
@@ -218,7 +273,24 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 useI18n();
+
+const copiedKey = ref(null);
+
+async function copyCode(text, key) {
+    try {
+        await navigator.clipboard.writeText(text);
+        copiedKey.value = key;
+        setTimeout(() => { copiedKey.value = null; }, 2000);
+    } catch (e) { /* ignore */ }
+}
+
+const cliCode = {
+    macArm:  'curl -L https://github.com/AntonAks/sdbx/releases/latest/download/sdbx_darwin_arm64.tar.gz | tar xz\nsudo mv sdbx /usr/local/bin/',
+    macIntel:'curl -L https://github.com/AntonAks/sdbx/releases/latest/download/sdbx_darwin_amd64.tar.gz | tar xz\nsudo mv sdbx /usr/local/bin/',
+    linux:   'curl -L https://github.com/AntonAks/sdbx/releases/latest/download/sdbx_linux_amd64.tar.gz | tar xz\nsudo mv sdbx /usr/local/bin/',
+};
 </script>

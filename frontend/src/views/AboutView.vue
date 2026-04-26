@@ -154,6 +154,43 @@
       </ul>
     </section>
 
+    <!-- CLI -->
+    <section class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8 mb-6">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">{{ $t('about.cli.heading') }}</h2>
+      <p class="text-gray-600 dark:text-slate-300 leading-relaxed mb-6">{{ $t('about.cli.description') }}</p>
+
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">{{ $t('about.cli.installHeading') }}</h3>
+      <div class="space-y-4 mb-6">
+        <div>
+          <p class="text-sm text-gray-500 dark:text-slate-400 mb-1.5">{{ $t('about.cli.macArm') }}</p>
+          <pre class="bg-gray-900 rounded-lg px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto"><code>curl -L https://github.com/AntonAks/sdbx/releases/latest/download/sdbx_darwin_arm64.tar.gz | tar xz
+sudo mv sdbx /usr/local/bin/</code></pre>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-slate-400 mb-1.5">{{ $t('about.cli.macIntel') }}</p>
+          <pre class="bg-gray-900 rounded-lg px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto"><code>curl -L https://github.com/AntonAks/sdbx/releases/latest/download/sdbx_darwin_amd64.tar.gz | tar xz
+sudo mv sdbx /usr/local/bin/</code></pre>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-slate-400 mb-1.5">{{ $t('about.cli.linux') }}</p>
+          <pre class="bg-gray-900 rounded-lg px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto"><code>curl -L https://github.com/AntonAks/sdbx/releases/latest/download/sdbx_linux_amd64.tar.gz | tar xz
+sudo mv sdbx /usr/local/bin/</code></pre>
+        </div>
+      </div>
+
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">{{ $t('about.cli.usageHeading') }}</h3>
+      <pre class="bg-gray-900 rounded-lg px-4 py-4 text-sm text-green-400 font-mono overflow-x-auto mb-6"><code>sdbx login              # authenticate via browser
+sdbx send report.pdf    # encrypt and upload a file
+sdbx send notes.txt     # encrypt and upload text
+sdbx receive &lt;link&gt;     # download and decrypt</code></pre>
+
+      <div class="text-center">
+        <a href="https://github.com/AntonAks/sdbx/releases" target="_blank" rel="noopener noreferrer" class="btn-outline btn-auto inline-block">
+          {{ $t('about.cli.releasesLink') }}
+        </a>
+      </div>
+    </section>
+
     <!-- Limitations -->
     <section class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8 mb-6">
       <h2 class="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">{{ $t('about.limitations.heading') }}</h2>

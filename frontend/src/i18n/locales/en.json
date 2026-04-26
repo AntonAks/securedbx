@@ -81,6 +81,11 @@
       "reason3": "You need to securely share passwords, API keys, or confidential documents without registration",
       "reason4": "You value privacy and full control over your data \u2014 no logs, no tracking",
       "reason5": "You need a simple \u201cview once \u2192 gone\u201d approach, with no history or repeated access"
+    },
+    "cli": {
+      "heading": "Use from the Terminal",
+      "description": "The SecureDBX CLI lets you send and receive files without opening a browser.",
+      "downloadLink": "Download CLI"
     }
   },
   "upload": {
@@ -523,6 +528,16 @@
       "cdnDesc": "Amazon CloudFront",
       "infra": "Infrastructure:",
       "infraDesc": "Terraform (Infrastructure as Code)"
+    },
+    "cli": {
+      "heading": "Command Line Interface (CLI)",
+      "description": "SecureDBX includes a CLI tool for sending and receiving files directly from your terminal — ideal for developers and server automation.",
+      "installHeading": "Installation",
+      "macArm": "macOS (Apple Silicon)",
+      "macIntel": "macOS (Intel)",
+      "linux": "Linux (x86_64)",
+      "usageHeading": "Quick Usage",
+      "releasesLink": "All Releases on GitHub"
     },
     "limitations": {
       "heading": "Limitations",

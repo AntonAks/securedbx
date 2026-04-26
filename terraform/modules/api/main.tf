@@ -333,6 +333,7 @@ module "lambda_upload_init" {
     CLOUDFRONT_SECRET    = var.cloudfront_secret
     RECAPTCHA_SECRET_KEY = var.recaptcha_secret_key
     IP_HASH_SALT_PARAM   = "/${var.project_name}/${var.environment}/ip-hash-salt"
+    AUTH_TABLE_NAME      = aws_dynamodb_table.auth.name
   }
 
   iam_policy_statements = [
@@ -350,6 +351,13 @@ module "lambda_upload_init" {
         "dynamodb:PutItem"
       ]
       resources = [var.table_arn]
+    },
+    {
+      effect = "Allow"
+      actions = [
+        "dynamodb:GetItem"
+      ]
+      resources = [aws_dynamodb_table.auth.arn]
     },
     {
       effect = "Allow"
@@ -417,6 +425,7 @@ module "lambda_download" {
     ENVIRONMENT          = var.environment
     CLOUDFRONT_SECRET    = var.cloudfront_secret
     RECAPTCHA_SECRET_KEY = var.recaptcha_secret_key
+    AUTH_TABLE_NAME      = aws_dynamodb_table.auth.name
   }
 
   iam_policy_statements = [
@@ -434,6 +443,13 @@ module "lambda_download" {
         "dynamodb:GetItem"
       ]
       resources = [var.table_arn]
+    },
+    {
+      effect = "Allow"
+      actions = [
+        "dynamodb:GetItem"
+      ]
+      resources = [aws_dynamodb_table.auth.arn]
     }
   ]
 
@@ -590,6 +606,7 @@ module "lambda_pin_upload_init" {
     CLOUDFRONT_SECRET    = var.cloudfront_secret
     RECAPTCHA_SECRET_KEY = var.recaptcha_secret_key
     IP_HASH_SALT_PARAM   = "/${var.project_name}/${var.environment}/ip-hash-salt"
+    AUTH_TABLE_NAME      = aws_dynamodb_table.auth.name
   }
 
   iam_policy_statements = [
@@ -602,6 +619,11 @@ module "lambda_pin_upload_init" {
       effect    = "Allow"
       actions   = ["dynamodb:PutItem", "dynamodb:GetItem"]
       resources = [var.table_arn]
+    },
+    {
+      effect    = "Allow"
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.auth.arn]
     },
     {
       effect = "Allow"
@@ -638,6 +660,7 @@ module "lambda_pin_initiate" {
     ENVIRONMENT          = var.environment
     CLOUDFRONT_SECRET    = var.cloudfront_secret
     RECAPTCHA_SECRET_KEY = var.recaptcha_secret_key
+    AUTH_TABLE_NAME      = aws_dynamodb_table.auth.name
   }
 
   iam_policy_statements = [
@@ -645,6 +668,11 @@ module "lambda_pin_initiate" {
       effect    = "Allow"
       actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
       resources = [var.table_arn]
+    },
+    {
+      effect    = "Allow"
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.auth.arn]
     }
   ]
 
@@ -668,6 +696,7 @@ module "lambda_pin_verify" {
     ENVIRONMENT          = var.environment
     CLOUDFRONT_SECRET    = var.cloudfront_secret
     RECAPTCHA_SECRET_KEY = var.recaptcha_secret_key
+    AUTH_TABLE_NAME      = aws_dynamodb_table.auth.name
   }
 
   iam_policy_statements = [
@@ -680,6 +709,11 @@ module "lambda_pin_verify" {
       effect    = "Allow"
       actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
       resources = [var.table_arn]
+    },
+    {
+      effect    = "Allow"
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.auth.arn]
     }
   ]
 

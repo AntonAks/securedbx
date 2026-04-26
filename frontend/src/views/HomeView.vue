@@ -168,9 +168,11 @@
         <h3 class="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">{{ $t('home.cli.heading') }}</h3>
         <p class="text-gray-600 dark:text-slate-400">{{ $t('home.cli.description') }}</p>
       </div>
-      <pre class="bg-gray-900 rounded-lg px-5 py-4 text-sm text-green-400 font-mono overflow-x-auto mb-5"><code>$ sdbx login
-$ sdbx send secret.pdf
-$ sdbx receive https://securedbx.com/...</code></pre>
+      <pre class="bg-gray-900 rounded-lg px-5 py-4 text-sm text-green-400 font-mono overflow-x-auto mb-5"><code>$ sdbx send secret.pdf
+{"file_id": "482973", "pin": "aB3x", ...}
+
+$ sdbx receive 482973
+Enter PIN: ****</code></pre>
       <div class="text-center">
         <a href="https://github.com/AntonAks/sdbx/releases" target="_blank" rel="noopener noreferrer" class="btn-outline btn-auto inline-block">
           {{ $t('home.cli.downloadLink') }}

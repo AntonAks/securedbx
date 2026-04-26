@@ -98,8 +98,11 @@ jobs:
         with:
           go-version: '1.24'
 
-      - name: Extract version
-        run: echo "VERSION=${GITHUB_REF_NAME#cli/}" >> $GITHUB_ENV
+      - name: Create semver tag for GoReleaser
+        run: |
+          VERSION="${GITHUB_REF_NAME#cli/}"
+          git tag "$VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - uses: goreleaser/goreleaser-action@v6
         with:

@@ -31,15 +31,3 @@ archives:
 
 checksum:
   name_template: "checksums.txt"
-
-brews:
-  - repository:
-      owner: securedbx
-      name: homebrew-sdbx
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    homepage: "https://securedbx.com"
-    description: "Zero-knowledge file sharing CLI"
-    install: |
-      bin.install "sdbx"
-    test: |
-      system "#{bin}/sdbx --version"

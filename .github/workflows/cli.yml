@@ -98,6 +98,9 @@ jobs:
         with:
           go-version: '1.24'
 
+      - name: Extract version
+        run: echo "VERSION=${GITHUB_REF_NAME#cli/}" >> $GITHUB_ENV
+
       - uses: goreleaser/goreleaser-action@v6
         with:
           workdir: cli
@@ -105,3 +108,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ env.VERSION }}

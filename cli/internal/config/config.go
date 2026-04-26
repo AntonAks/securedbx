@@ -23,7 +23,7 @@ func BaseURL() string {
 	if v := os.Getenv("SECUREDBX_BASE_URL"); v != "" {
 		return v
 	}
-	return "https://api.securedbx.com"
+	return "https://securedbx.com/prod"
 }
 
 // CFSecret returns the CloudFront origin secret from env.

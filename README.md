@@ -244,11 +244,17 @@ sdbx receive 482973
 # {"type": "file", "path": "./document.pdf"}
 ```
 
+**Check version:**
+```bash
+sdbx version
+```
+
 **Options for `send`:**
 ```
 --text "..."       Send text instead of a file
 --ttl 1-24         Expiry in hours (default: 1)
 --pin-value xxxx   Custom PIN (4 chars, a-z A-Z 0-9); auto-generated if omitted
+--multi            Allow multiple downloads until TTL expires (default: one-time)
 ```
 
 ### How it works
@@ -270,6 +276,12 @@ export SECUREDBX_BASE_URL="https://securedbx.com/prod"  # API endpoint
 ```
 
 API keys are obtained automatically via Proof-of-Work challenge and cached in `~/.config/securedbx/config.json` (24h TTL).
+
+The CLI checks for updates once per day in the background. If a new version is available, a notice is printed after the command completes:
+```
+Update available: 1.0.1 → 1.0.2
+Download: https://github.com/AntonAks/sdbx/releases/latest
+```
 
 ---
 

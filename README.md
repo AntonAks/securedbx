@@ -209,18 +209,16 @@
 
 Download the binary for your platform from [Releases](https://github.com/AntonAks/securedbx/releases):
 
-### Linux (amd64)
 ```bash
+# Linux (amd64)
 curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_linux_amd64.tar.gz | tar xz
 sudo mv sdbx /usr/local/bin/
-```
-### macOS (Apple Silicon)
-```bash
+
+# macOS (Apple Silicon)
 curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_darwin_arm64.tar.gz | tar xz
 sudo mv sdbx /usr/local/bin/
-```
-### macOS (Intel)
-```bash
+
+# macOS (Intel)
 curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_darwin_amd64.tar.gz | tar xz
 sudo mv sdbx /usr/local/bin/
 ```
@@ -246,11 +244,17 @@ sdbx receive 482973
 # {"type": "file", "path": "./document.pdf"}
 ```
 
+**Check version:**
+```bash
+sdbx version
+```
+
 **Options for `send`:**
 ```
 --text "..."       Send text instead of a file
 --ttl 1-24         Expiry in hours (default: 1)
 --pin-value xxxx   Custom PIN (4 chars, a-z A-Z 0-9); auto-generated if omitted
+--multi            Allow multiple downloads until TTL expires (default: one-time)
 ```
 
 ### How it works

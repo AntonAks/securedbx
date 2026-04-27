@@ -22,6 +22,7 @@ var (
 	sendText     string
 	sendPINValue string
 	sendTTL      int
+	sendMulti    bool
 )
 
 func NewSendCmd() *cobra.Command {
@@ -33,6 +34,7 @@ func NewSendCmd() *cobra.Command {
 	cmd.Flags().StringVar(&sendText, "text", "", "Send text instead of file")
 	cmd.Flags().StringVar(&sendPINValue, "pin-value", "", "PIN (4 chars a-z A-Z 0-9); auto-generated if omitted")
 	cmd.Flags().IntVar(&sendTTL, "ttl", 1, "Expiry in hours (1–24)")
+	cmd.Flags().BoolVar(&sendMulti, "multi", false, "Allow multiple downloads until TTL expires")
 	return cmd
 }
 
@@ -77,13 +79,18 @@ func runSend(cmd *cobra.Command, args []string) error {
 		pin = generatePIN()
 	}
 
+	accessMode := "one_time"
+	if sendMulti {
+		accessMode = "multi"
+	}
+
 	req := api.PINUploadRequest{
 		ContentType: "file",
 		FileSize:    int64(len(plaintext)),
 		PIN:         pin,
 		FileName:    filename,
 		TTL:         sendTTL * 60,
-		AccessMode:  "one_time",
+		AccessMode:  accessMode,
 	}
 
 	resp, err := client.PINUpload(ctx, req)

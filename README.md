@@ -213,11 +213,13 @@ Download the binary for your platform from [Releases](https://github.com/AntonAk
 # Linux (amd64)
 curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_linux_amd64.tar.gz | tar xz
 sudo mv sdbx /usr/local/bin/
-
+```
+```bash
 # macOS (Apple Silicon)
 curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_darwin_arm64.tar.gz | tar xz
 sudo mv sdbx /usr/local/bin/
-
+```
+```bash
 # macOS (Intel)
 curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_darwin_amd64.tar.gz | tar xz
 sudo mv sdbx /usr/local/bin/

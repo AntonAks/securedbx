@@ -70,7 +70,10 @@
         <p class="text-gray-700 dark:text-slate-300 mb-2">{{ $t('download.link.fileDecrypted') }}</p>
         <p class="text-gray-500 dark:text-slate-400 text-sm">{{ $t('download.link.fileDeletedFromServers') }}</p>
       </div>
-      <router-link to="/" class="btn-primary block text-center">{{ $t('download.link.shareAnotherFile') }}</router-link>
+      <div class="flex gap-3">
+        <router-link to="/" class="btn-primary flex-1 text-center">{{ $t('download.link.shareAnotherFile') }}</router-link>
+        <a href="https://securedbx.com/#/download" class="btn-secondary flex-1 text-center">Download Another (PIN)</a>
+      </div>
     </section>
 
     <!-- Error -->

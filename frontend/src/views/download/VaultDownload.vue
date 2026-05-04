@@ -85,7 +85,10 @@
           {{ $t('download.vault.accessAgain') }}
         </p>
       </div>
-      <router-link to="/" class="btn-primary block text-center">{{ $t('download.vault.shareAnotherSecret') }}</router-link>
+      <div class="flex gap-3">
+        <router-link to="/" class="btn-primary flex-1 text-center">{{ $t('download.vault.shareAnotherSecret') }}</router-link>
+        <a href="https://securedbx.com/#/download" class="btn-secondary flex-1 text-center">Download Another (PIN)</a>
+      </div>
     </section>
 
     <!-- Vault File Success -->

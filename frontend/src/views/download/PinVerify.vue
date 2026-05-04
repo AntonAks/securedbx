@@ -65,7 +65,10 @@
           class="w-full px-4 py-3 bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-200 font-mono text-sm mb-4 resize-vertical focus:outline-none focus:border-blue-500"></textarea>
         <button @click="copyText" class="btn-secondary btn-auto">{{ textCopied ? $t('download.pin.textCopied') : $t('download.pin.copyText') }}</button>
       </div>
-      <router-link to="/" class="btn-primary block text-center">{{ $t('download.pin.shareAnotherSecret') }}</router-link>
+      <div class="flex gap-3">
+        <router-link to="/" class="btn-primary flex-1 text-center">{{ $t('download.pin.shareAnotherSecret') }}</router-link>
+        <a href="https://securedbx.com/#/download" class="btn-secondary flex-1 text-center">Download Another (PIN)</a>
+      </div>
     </section>
 
     <!-- File Success -->

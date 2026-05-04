@@ -213,11 +213,13 @@ Download the binary for your platform from [Releases](https://github.com/AntonAk
 # Linux (amd64)
 curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_linux_amd64.tar.gz | tar xz
 sudo mv sdbx /usr/local/bin/
-
+```
+```bash
 # macOS (Apple Silicon)
 curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_darwin_arm64.tar.gz | tar xz
 sudo mv sdbx /usr/local/bin/
-
+```
+```bash
 # macOS (Intel)
 curl -L https://github.com/AntonAks/securedbx/releases/latest/download/sdbx_darwin_amd64.tar.gz | tar xz
 sudo mv sdbx /usr/local/bin/
@@ -268,20 +270,8 @@ sdbx version
 The recipient can download via CLI or the web UI at [securedbx.com](https://securedbx.com).
 
 ### Configuration
-
-By default, the CLI connects to `https://securedbx.com/prod`. Override with environment variables:
-
-```bash
-export SECUREDBX_BASE_URL="https://securedbx.com/prod"  # API endpoint
-```
-
 API keys are obtained automatically via Proof-of-Work challenge and cached in `~/.config/securedbx/config.json` (24h TTL).
 
-The CLI checks for updates once per day in the background. If a new version is available, a notice is printed after the command completes:
-```
-Update available: 1.0.1 → 1.0.2
-Download: https://github.com/AntonAks/sdbx/releases/latest
-```
 
 ---
 

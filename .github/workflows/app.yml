@@ -3,16 +3,8 @@ name: App
 on:
   push:
     branches: [main]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/app.yml'
   pull_request:
     branches: [main]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/app.yml'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

@@ -13,10 +13,11 @@ import (
 
 // Client is an HTTP client for the sdbx API.
 type Client struct {
-	baseURL    string
-	cfSecret   string
-	apiKey     string
-	httpClient *http.Client
+	baseURL        string
+	cfSecret       string
+	apiKey         string
+	httpClient     *http.Client
+	transferClient *http.Client
 }
 
 // New creates a new API client.
@@ -26,6 +27,17 @@ func New(baseURL, cfSecret, apiKey string) *Client {
 		cfSecret:   cfSecret,
 		apiKey:     apiKey,
 		httpClient: &http.Client{Timeout: 60 * time.Second},
+		// transferClient has no hard timeout — large file uploads/downloads
+		// are bounded by the caller's context, not a fixed wall-clock limit.
+		// We only set idle/TLS/response-header timeouts so stalled
+		// connections still fail fast, but active data transfer is unlimited.
+		transferClient: &http.Client{
+			Transport: &http.Transport{
+				TLSHandshakeTimeout:   30 * time.Second,
+				ResponseHeaderTimeout: 120 * time.Second,
+				IdleConnTimeout:       90 * time.Second,
+			},
+		},
 	}
 }
 
@@ -234,7 +246,7 @@ func (c *Client) UploadToS3(ctx context.Context, url string, body io.Reader, siz
 	}
 	req.Header.Set("Content-Type", "application/octet-stream")
 	req.ContentLength = size
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.transferClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -250,7 +262,7 @@ func (c *Client) DownloadFromS3(ctx context.Context, url string, onProgress func
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.transferClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

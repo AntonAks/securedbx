@@ -33,3 +33,15 @@ archives:
 
 checksum:
   name_template: "checksums.txt"
+
+brews:
+  - repository:
+      owner: AntonAks
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: "https://securedbx.com"
+    description: "Zero-knowledge file sharing CLI — encrypt, share, self-destruct"
+    license: "MIT"
+    test: |
+      system "#{bin}/sdbx", "version"

@@ -3,6 +3,8 @@ name: CLI
 on:
   push:
     branches: [main, dev]
+    tags:
+      - 'cli/v*'
   pull_request:
     branches: [main, dev]
 

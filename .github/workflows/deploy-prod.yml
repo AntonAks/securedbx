@@ -1,0 +1,81 @@
+name: Deploy Prod
+
+on:
+  push:
+    branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy:
+    name: Deploy to Prod
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '~1.5'
+
+      - name: Build Lambda packages
+        run: ./scripts/build-lambdas.sh prod
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm install
+
+      - name: Build frontend
+        run: cd frontend && npm run build
+
+      - name: Terraform Init
+        working-directory: terraform/environments/prod
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          cp -n terraform.tfvars.example terraform.tfvars 2>/dev/null || true
+          terraform init -backend-config="bucket=sdbx-terraform-state-${ACCOUNT_ID}"
+
+      - name: Ensure IP hash salt exists
+        run: |
+          if ! aws ssm get-parameter --name "/sdbx/prod/ip-hash-salt" --query Parameter.Name --output text &>/dev/null; then
+            ./scripts/init-ip-hash-salt.sh sdbx prod
+          fi
+
+      - name: Terraform Validate
+        working-directory: terraform/environments/prod
+        run: terraform validate
+
+      - name: Terraform Apply
+        working-directory: terraform/environments/prod
+        env:
+          TF_VAR_recaptcha_secret_key: ${{ secrets.TF_VAR_RECAPTCHA_SECRET_KEY }}
+        run: terraform apply -auto-approve
+
+      - name: Deploy frontend to S3
+        working-directory: terraform/environments/prod
+        run: |
+          BUCKET=$(terraform output -raw static_bucket_name)
+          aws s3 sync ../../frontend/dist/ s3://$BUCKET/ --delete
+
+      - name: Invalidate CloudFront
+        working-directory: terraform/environments/prod
+        run: |
+          DIST_ID=$(terraform output -raw cloudfront_distribution_id)
+          aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*"

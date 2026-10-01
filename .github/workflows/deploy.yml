@@ -1,0 +1,81 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        type: choice
+        options: [dev, prod]
+        required: true
+
+permissions:
+  id-token: write   # OIDC token for AWS role assumption — no stored keys
+  contents: read
+
+env:
+  AWS_REGION: eu-central-1
+  # main → prod, anything else (dev) → dev; manual dispatch picks explicitly
+  DEPLOY_ENV: ${{ inputs.environment || (github.ref_name == 'main' && 'prod' || 'dev') }}
+
+concurrency:
+  group: deploy-${{ inputs.environment || (github.ref_name == 'main' && 'prod' || 'dev') }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.environment || (github.ref_name == 'main' && 'prod' || 'dev') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build Lambda packages
+        run: ./scripts/build-lambdas.sh "$DEPLOY_ENV"
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform apply
+        working-directory: terraform/environments/${{ env.DEPLOY_ENV }}
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          terraform init -input=false -backend-config="bucket=sdbx-terraform-state-${ACCOUNT_ID}"
+          terraform validate
+          terraform apply -input=false -auto-approve
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish frontend to S3 + invalidate CloudFront
+        working-directory: terraform/environments/${{ env.DEPLOY_ENV }}
+        run: |
+          BUCKET=$(terraform output -raw static_bucket_name)
+          DIST_ID=$(terraform output -raw cloudfront_distribution_id)
+          aws s3 sync ../../../frontend/dist/ "s3://${BUCKET}/" --delete
+          # sw.js and the manifest must never be cached long, or PWA updates lag
+          aws s3 cp ../../../frontend/dist/sw.js "s3://${BUCKET}/sw.js" --cache-control "no-cache" || true
+          aws s3 cp ../../../frontend/dist/manifest.webmanifest "s3://${BUCKET}/manifest.webmanifest" --cache-control "no-cache" || true
+          aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"

@@ -38,11 +38,6 @@ variable "allowed_ttl_hours" {
   }
 }
 
-variable "recaptcha_secret_key" {
-  description = "Google reCAPTCHA v3 secret key for bot protection"
-  type        = string
-  sensitive   = true
-}
 
 variable "custom_domain" {
   description = "Custom domain name for the production site"

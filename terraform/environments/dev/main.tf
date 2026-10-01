@@ -1,3 +1,9 @@
+# reCAPTCHA secret lives in SSM Parameter Store (never in tfvars or CI):
+#   aws ssm put-parameter --name "/sdbx/ENV/recaptcha-secret-key" --type SecureString --value "..."
+data "aws_ssm_parameter" "recaptcha_secret_key" {
+  name = "/${var.project_name}/${var.environment}/recaptcha-secret-key"
+}
+
 locals {
   common_tags = {
     Project     = "sdbx"
@@ -39,7 +45,7 @@ module "api" {
   table_arn            = module.storage.table_arn
   max_file_size_bytes  = var.max_file_size_bytes
   cloudfront_secret    = random_password.cloudfront_secret.result
-  recaptcha_secret_key = var.recaptcha_secret_key
+  recaptcha_secret_key = data.aws_ssm_parameter.recaptcha_secret_key.value
   tags                 = local.common_tags
 }
 

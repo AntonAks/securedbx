@@ -91,6 +91,9 @@ const { copied: passwordCopied, copy: copyToClipboard } = useClipboard();
 const ttlRef = ref(null);
 const text = ref('');
 
+const props = defineProps({ initialText: { type: String, default: '' } });
+if (props.initialText) text.value = props.initialText;
+
 const usePassword = ref(false);
 const password = ref('');
 const showPassword = ref(false);

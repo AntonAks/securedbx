@@ -14,3 +14,7 @@ app.use(createPinia());
 app.use(i18n);
 app.use(router);
 app.mount('#app');
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+}

@@ -1,5 +1,13 @@
 # reCAPTCHA secret lives in SSM Parameter Store (never in tfvars or CI):
 #   aws ssm put-parameter --name "/sdbx/ENV/recaptcha-secret-key" --type SecureString --value "..."
+# Cert is looked up by domain at apply time — no ARNs/account ids in git
+data "aws_acm_certificate" "custom_domain" {
+  provider    = aws.us_east_1
+  domain      = var.custom_domain
+  statuses    = ["ISSUED"]
+  most_recent = true
+}
+
 data "aws_ssm_parameter" "recaptcha_secret_key" {
   name = "/${var.project_name}/${var.environment}/recaptcha-secret-key"
 }
@@ -61,7 +69,7 @@ module "cdn" {
   api_endpoint                       = module.api.api_invoke_url
   cloudfront_secret                  = random_password.cloudfront_secret.result
   custom_domain                      = var.custom_domain
-  acm_certificate_arn                = var.acm_certificate_arn
+  acm_certificate_arn                = data.aws_acm_certificate.custom_domain.arn
   tags                               = local.common_tags
 }
 

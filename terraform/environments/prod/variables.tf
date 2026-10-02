@@ -24,7 +24,7 @@ variable "project_name" {
 variable "max_file_size_bytes" {
   description = "Maximum file size in bytes"
   type        = number
-  default     = 104857600 # 100 MB
+  default     = 524288000 # 500 MB
 }
 
 variable "allowed_ttl_hours" {
@@ -42,13 +42,7 @@ variable "allowed_ttl_hours" {
 variable "custom_domain" {
   description = "Custom domain name for the production site"
   type        = string
-  default     = ""
-}
-
-variable "acm_certificate_arn" {
-  description = "ACM certificate ARN for custom domain (must be in us-east-1)"
-  type        = string
-  default     = ""
+  default     = "securedbx.com"
 }
 
 variable "cloudfront_domain_override" {

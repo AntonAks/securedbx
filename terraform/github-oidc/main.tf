@@ -23,8 +23,10 @@ provider "aws" {
 resource "aws_iam_openid_connect_provider" "github" {
   url            = "https://token.actions.githubusercontent.com"
   client_id_list = ["sts.amazonaws.com"]
-  # GitHub rotates thumbprints; AWS now validates the cert chain itself,
-  # but the argument is still required.
+  # NOT a secret: public SHA-1 fingerprint of the DigiCert root CA behind
+  # token.actions.githubusercontent.com — the same well-known constant from the
+  # AWS/GitHub OIDC docs for everyone. Since 2023 AWS validates GitHub's cert
+  # chain itself, but the API still requires the field to be present.
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 

@@ -65,6 +65,8 @@ jobs:
 
       - name: Build frontend
         working-directory: frontend
+        env:
+          VITE_API_BASE: /${{ env.DEPLOY_ENV }}
         run: |
           npm ci
           npm run build

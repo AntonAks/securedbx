@@ -35,7 +35,8 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          # Secret (not a repo variable) so the account id is masked in public logs
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - uses: actions/setup-python@v5
@@ -55,7 +56,7 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           terraform init -input=false -backend-config="bucket=sdbx-terraform-state-${ACCOUNT_ID}"
           terraform validate
-          terraform apply -input=false -auto-approve
+          terraform apply -input=false -auto-approve -lock-timeout=5m
 
       - uses: actions/setup-node@v4
         with:

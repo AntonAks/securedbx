@@ -9,7 +9,13 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 
 self.addEventListener('fetch', (e) => {
     const url = new URL(e.request.url);
-    if (e.request.method === 'POST' && url.pathname === '/share-target') {
+    // Real Android shares arrive same-origin; reject cross-site form POSTs
+    // so a malicious page can't plant files into the upload form.
+    if (
+        e.request.method === 'POST' &&
+        url.pathname === '/share-target' &&
+        e.request.headers.get('sec-fetch-site') !== 'cross-site'
+    ) {
         e.respondWith(handleShare(e.request));
     }
     // Everything else falls through to the network untouched.

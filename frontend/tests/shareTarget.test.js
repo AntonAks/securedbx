@@ -64,3 +64,30 @@ describe('takeShare', () => {
         expect(await takeShare()).toBeNull();
     });
 });
+
+describe('takeShare — degraded stash', () => {
+    beforeEach(() => {
+        window.caches = makeCaches();
+    });
+
+    it('skips missing file entries and still clears the stash', async () => {
+        await stash(
+            window.caches,
+            { text: '', title: '', url: '', files: [{ name: 'a.txt', type: 'text/plain' }, { name: 'b.txt', type: 'text/plain' }] },
+            [new Blob(['only-first'])] // second file entry never written
+        );
+
+        const shared = await takeShare();
+        expect(shared.files).toHaveLength(1);
+        expect(shared.files[0].name).toBe('a.txt');
+        expect(await takeShare()).toBeNull(); // stash gone
+    });
+
+    it('returns null on corrupt meta and still clears the stash', async () => {
+        const cache = await window.caches.open('share-target-stash');
+        await cache.put('/share-meta', new Response('not-json{'));
+
+        expect(await takeShare()).toBeNull();
+        expect(window.caches._stores.has('share-target-stash')).toBe(false);
+    });
+});

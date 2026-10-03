@@ -1,0 +1,114 @@
+name: Deploy
+
+on:
+  push:
+    branches: [dev]       # auto-deploy dev environment
+  workflow_dispatch:      # manual prod release — always deploys main
+    inputs:
+      version:
+        description: 'Release version (e.g. v1.2.3)'
+        type: string
+        required: true
+
+permissions:
+  id-token: write   # OIDC token for AWS role assumption — no stored keys
+  contents: write   # push the release tag after a successful prod deploy
+
+env:
+  AWS_REGION: eu-central-1
+  # manual dispatch → prod (from main), push to dev → dev
+  DEPLOY_ENV: ${{ github.event_name == 'workflow_dispatch' && 'prod' || 'dev' }}
+  APP_VERSION: ${{ inputs.version || '' }}
+
+concurrency:
+  group: deploy-${{ github.event_name == 'workflow_dispatch' && 'prod' || 'dev' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ github.event_name == 'workflow_dispatch' && 'prod' || 'dev' }}
+    runs-on: ubuntu-latest
+    # prod releases: repo owner only
+    if: github.event_name == 'push' || github.actor == 'AntonAks'
+
+    steps:
+      - name: Validate version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          [[ "$APP_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+            || { echo "::error::Version must look like v1.2.3, got: $APP_VERSION"; exit 1; }
+
+      - uses: actions/checkout@v4
+        with:
+          # prod always releases main, no matter which branch the dispatch ran from
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # Secret (not a repo variable) so the account id is masked in public logs
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build Lambda packages
+        run: ./scripts/build-lambdas.sh "$DEPLOY_ENV"
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform apply
+        working-directory: terraform/environments/${{ env.DEPLOY_ENV }}
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          terraform init -input=false -backend-config="bucket=sdbx-terraform-state-${ACCOUNT_ID}"
+          terraform validate
+          terraform apply -input=false -auto-approve -lock-timeout=5m
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          VITE_API_BASE: /${{ env.DEPLOY_ENV }}
+        run: |
+          # release → version input; dev push → short commit sha
+          export VITE_APP_VERSION="${APP_VERSION:-${GITHUB_SHA::7}}"
+          echo "Version: $VITE_APP_VERSION"
+          npm ci
+          npm run build
+
+      - name: Publish frontend to S3 + invalidate CloudFront
+        working-directory: terraform/environments/${{ env.DEPLOY_ENV }}
+        run: |
+          BUCKET=$(terraform output -raw static_bucket_name)
+          DIST_ID=$(terraform output -raw cloudfront_distribution_id)
+          aws s3 sync ../../../frontend/dist/ "s3://${BUCKET}/" --delete
+          # sw.js and the manifest must never be cached long, or PWA updates lag
+          aws s3 cp ../../../frontend/dist/sw.js "s3://${BUCKET}/sw.js" --cache-control "no-cache" || true
+          aws s3 cp ../../../frontend/dist/manifest.webmanifest "s3://${BUCKET}/manifest.webmanifest" --cache-control "no-cache" || true
+          aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
+
+          APP_URL="https://$(terraform output -raw cloudfront_domain)"
+          echo "App deployed: $APP_URL"
+          {
+            echo "## 🚀 ${DEPLOY_ENV} deployed (${APP_VERSION:-${GITHUB_SHA::7}})"
+            echo "- App: $APP_URL"
+            echo "- API: $(terraform output -raw api_endpoint)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Tag release
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$APP_VERSION"
+          git push origin "$APP_VERSION"

@@ -38,11 +38,6 @@ variable "allowed_ttl_hours" {
   }
 }
 
-variable "recaptcha_secret_key" {
-  description = "Google reCAPTCHA v3 secret key for bot protection"
-  type        = string
-  sensitive   = true
-}
 
 variable "cloudfront_domain_override" {
   description = "Override CloudFront domain for CORS (use for manual configuration or testing)"

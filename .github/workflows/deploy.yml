@@ -107,8 +107,12 @@ jobs:
 
       - name: Tag release
         if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "$APP_VERSION"
           git push origin "$APP_VERSION"
+          # git tag alone doesn't show up in the Releases box — create the real thing
+          gh release create "$APP_VERSION" --generate-notes

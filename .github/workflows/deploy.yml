@@ -2,35 +2,46 @@ name: Deploy
 
 on:
   push:
-    branches: [main, dev]
-  workflow_dispatch:
+    branches: [dev]       # auto-deploy dev environment
+  workflow_dispatch:      # manual prod release — always deploys main
     inputs:
-      environment:
-        description: 'Environment to deploy'
-        type: choice
-        options: [dev, prod]
+      version:
+        description: 'Release version (e.g. v1.2.3)'
+        type: string
         required: true
 
 permissions:
   id-token: write   # OIDC token for AWS role assumption — no stored keys
-  contents: read
+  contents: write   # push the release tag after a successful prod deploy
 
 env:
   AWS_REGION: eu-central-1
-  # main → prod, anything else (dev) → dev; manual dispatch picks explicitly
-  DEPLOY_ENV: ${{ inputs.environment || (github.ref_name == 'main' && 'prod' || 'dev') }}
+  # manual dispatch → prod (from main), push to dev → dev
+  DEPLOY_ENV: ${{ github.event_name == 'workflow_dispatch' && 'prod' || 'dev' }}
+  APP_VERSION: ${{ inputs.version || '' }}
 
 concurrency:
-  group: deploy-${{ inputs.environment || (github.ref_name == 'main' && 'prod' || 'dev') }}
+  group: deploy-${{ github.event_name == 'workflow_dispatch' && 'prod' || 'dev' }}
   cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Deploy ${{ inputs.environment || (github.ref_name == 'main' && 'prod' || 'dev') }}
+    name: Deploy ${{ github.event_name == 'workflow_dispatch' && 'prod' || 'dev' }}
     runs-on: ubuntu-latest
+    # prod releases: repo owner only
+    if: github.event_name == 'push' || github.actor == 'AntonAks'
 
     steps:
+      - name: Validate version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          [[ "$APP_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+            || { echo "::error::Version must look like v1.2.3, got: $APP_VERSION"; exit 1; }
+
       - uses: actions/checkout@v4
+        with:
+          # prod always releases main, no matter which branch the dispatch ran from
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -69,6 +80,9 @@ jobs:
         env:
           VITE_API_BASE: /${{ env.DEPLOY_ENV }}
         run: |
+          # release → version input; dev push → short commit sha
+          export VITE_APP_VERSION="${APP_VERSION:-${GITHUB_SHA::7}}"
+          echo "Version: $VITE_APP_VERSION"
           npm ci
           npm run build
 
@@ -86,7 +100,15 @@ jobs:
           APP_URL="https://$(terraform output -raw cloudfront_domain)"
           echo "App deployed: $APP_URL"
           {
-            echo "## 🚀 ${DEPLOY_ENV} deployed"
+            echo "## 🚀 ${DEPLOY_ENV} deployed (${APP_VERSION:-${GITHUB_SHA::7}})"
             echo "- App: $APP_URL"
             echo "- API: $(terraform output -raw api_endpoint)"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Tag release
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$APP_VERSION"
+          git push origin "$APP_VERSION"

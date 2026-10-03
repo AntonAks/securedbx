@@ -82,3 +82,11 @@ jobs:
           aws s3 cp ../../../frontend/dist/sw.js "s3://${BUCKET}/sw.js" --cache-control "no-cache" || true
           aws s3 cp ../../../frontend/dist/manifest.webmanifest "s3://${BUCKET}/manifest.webmanifest" --cache-control "no-cache" || true
           aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
+
+          APP_URL="https://$(terraform output -raw cloudfront_domain)"
+          echo "App deployed: $APP_URL"
+          {
+            echo "## 🚀 ${DEPLOY_ENV} deployed"
+            echo "- App: $APP_URL"
+            echo "- API: $(terraform output -raw api_endpoint)"
+          } >> "$GITHUB_STEP_SUMMARY"

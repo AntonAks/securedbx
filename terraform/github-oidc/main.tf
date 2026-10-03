@@ -48,6 +48,7 @@ data "aws_iam_policy_document" "trust" {
       values = [
         "repo:AntonAks/securedbx:ref:refs/heads/main",
         "repo:AntonAks/securedbx:ref:refs/heads/dev",
+        "repo:AntonAks/securedbx:ref:refs/tags/v*", # prod releases are v* tags
       ]
     }
   }

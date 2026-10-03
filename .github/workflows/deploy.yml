@@ -2,7 +2,8 @@ name: Deploy
 
 on:
   push:
-    branches: [main, dev]
+    branches: [dev]
+    tags: ['v*']          # release to prod = push a v1.2.3 tag
   workflow_dispatch:
     inputs:
       environment:
@@ -17,16 +18,16 @@ permissions:
 
 env:
   AWS_REGION: eu-central-1
-  # main → prod, anything else (dev) → dev; manual dispatch picks explicitly
-  DEPLOY_ENV: ${{ inputs.environment || (github.ref_name == 'main' && 'prod' || 'dev') }}
+  # v* tag → prod, dev branch push → dev; manual dispatch picks explicitly
+  DEPLOY_ENV: ${{ inputs.environment || (github.ref_type == 'tag' && 'prod' || 'dev') }}
 
 concurrency:
-  group: deploy-${{ inputs.environment || (github.ref_name == 'main' && 'prod' || 'dev') }}
+  group: deploy-${{ inputs.environment || (github.ref_type == 'tag' && 'prod' || 'dev') }}
   cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Deploy ${{ inputs.environment || (github.ref_name == 'main' && 'prod' || 'dev') }}
+    name: Deploy ${{ inputs.environment || (github.ref_type == 'tag' && 'prod' || 'dev') }}
     runs-on: ubuntu-latest
 
     steps:
@@ -69,6 +70,9 @@ jobs:
         env:
           VITE_API_BASE: /${{ env.DEPLOY_ENV }}
         run: |
+          # tag push → tag is the version; dev push → short commit sha
+          export VITE_APP_VERSION=$([ "$GITHUB_REF_TYPE" = "tag" ] && echo "$GITHUB_REF_NAME" || echo "${GITHUB_SHA::7}")
+          echo "Version: $VITE_APP_VERSION"
           npm ci
           npm run build
 
@@ -86,7 +90,7 @@ jobs:
           APP_URL="https://$(terraform output -raw cloudfront_domain)"
           echo "App deployed: $APP_URL"
           {
-            echo "## 🚀 ${DEPLOY_ENV} deployed"
+            echo "## 🚀 ${DEPLOY_ENV} deployed ($([ "$GITHUB_REF_TYPE" = "tag" ] && echo "$GITHUB_REF_NAME" || echo "${GITHUB_SHA::7}"))"
             echo "- App: $APP_URL"
             echo "- API: $(terraform output -raw api_endpoint)"
           } >> "$GITHUB_STEP_SUMMARY"

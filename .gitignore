@@ -109,3 +109,10 @@ ENHANCEMENT_PLAN.md
 DEPLOYMENT_CHECKLIST.md
 
 SALT.md
+
+# Android TWA build artifacts (keystore must NEVER be committed)
+android/*.keystore
+android/app/
+android/build/
+*.apk
+*.aab

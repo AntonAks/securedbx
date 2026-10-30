@@ -1,0 +1,28 @@
+{
+  "packageId": "com.securedbx.app",
+  "host": "securedbx.com",
+  "name": "SecureDBX",
+  "launcherName": "SecureDBX",
+  "display": "standalone",
+  "themeColor": "#0f172a",
+  "navigationColor": "#0f172a",
+  "backgroundColor": "#0f172a",
+  "startUrl": "/",
+  "iconUrl": "https://securedbx.com/favicon-512.png",
+  "maskableIconUrl": "https://securedbx.com/favicon-512.png",
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://securedbx.com/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "enableNotifications": false,
+  "isChromeOSOnly": false,
+  "orientation": "default",
+  "fingerprints": [],
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "securedbx"
+  }
+}

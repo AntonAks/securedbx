@@ -84,6 +84,9 @@ const { copied: passwordCopied, copy: copyToClipboard } = useClipboard();
 const ttlRef = ref(null);
 const selectedFiles = ref([]);
 
+const props = defineProps({ initialFiles: { type: Array, default: null } });
+if (props.initialFiles?.length) addFiles(props.initialFiles);
+
 // New options
 const usePassword = ref(false);
 const password = ref('');

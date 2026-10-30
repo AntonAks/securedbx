@@ -46,8 +46,8 @@
         </div>
       </div>
 
-      <LinkUpload v-if="linkTab === 'file'" />
-      <TextUpload v-if="linkTab === 'text'" />
+      <LinkUpload v-if="linkTab === 'file'" :initial-files="sharedFiles" />
+      <TextUpload v-if="linkTab === 'text'" :initial-text="sharedText" />
     </section>
 
     <!-- PIN Upload Result -->
@@ -186,6 +186,7 @@ Enter PIN: ****</code></pre>
 import { ref, computed, onMounted, inject, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStatsStore } from '../stores/stats.js';
+import { takeShare } from '../shareTarget.js';
 import { useClipboard } from '../composables/useClipboard.js';
 import MethodSelector from '../components/MethodSelector.vue';
 import PinUpload from './home/PinUpload.vue';
@@ -211,7 +212,20 @@ const ttlLabel = computed(() => {
 
 const homeResetKey = inject('homeResetKey');
 
-onMounted(() => statsStore.load());
+const sharedFiles = ref(null);
+const sharedText = ref('');
+
+onMounted(async () => {
+    statsStore.load();
+    // Payload stashed by sw.js when Android shares into the app
+    const shared = await takeShare().catch(() => null);
+    if (shared) {
+        sharedFiles.value = shared.files;
+        sharedText.value = [shared.title, shared.text, shared.url].filter(Boolean).join('\n');
+        selectedMethod.value = 'link';
+        linkTab.value = shared.files.length ? 'file' : 'text';
+    }
+});
 
 watch(homeResetKey, () => {
     selectedMethod.value = null;

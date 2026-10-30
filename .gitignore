@@ -29,6 +29,7 @@ eggs/
 .eggs/
 lib/
 lib64/
+!frontend/src/lib/
 parts/
 sdist/
 var/
@@ -108,4 +109,10 @@ ENHANCEMENT_PLAN.md
 DEPLOYMENT_CHECKLIST.md
 
 SALT.md
-!frontend/src/lib/
+
+# Android TWA build artifacts (keystore must NEVER be committed)
+android/*.keystore
+android/app/
+android/build/
+*.apk
+*.aab

@@ -4,12 +4,14 @@
       {{ $t('footer.copyright', { year }) }}
     </p>
     <p class="text-sm">
-      <router-link to="/about" class="text-blue-500 hover:text-blue-400">{{ $t('nav.about') }}</router-link>
-      <span class="text-gray-400 dark:text-slate-600 mx-2">|</span>
-      <router-link to="/faq" class="text-blue-500 hover:text-blue-400">{{ $t('nav.faq') }}</router-link>
-      <span class="text-gray-400 dark:text-slate-600 mx-2">|</span>
-      <a href="https://github.com/antonaks/sdbx" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-400">{{ $t('footer.sourceCode') }}</a>
-      <span class="text-gray-400 dark:text-slate-600 mx-2">|</span>
+      <span class="web-only">
+        <router-link to="/about" class="text-blue-500 hover:text-blue-400">{{ $t('nav.about') }}</router-link>
+        <span class="text-gray-400 dark:text-slate-600 mx-2">|</span>
+        <router-link to="/faq" class="text-blue-500 hover:text-blue-400">{{ $t('nav.faq') }}</router-link>
+        <span class="text-gray-400 dark:text-slate-600 mx-2">|</span>
+        <a href="https://github.com/antonaks/sdbx" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-400">{{ $t('footer.sourceCode') }}</a>
+        <span class="text-gray-400 dark:text-slate-600 mx-2">|</span>
+      </span>
       <span class="text-gray-400 dark:text-slate-600">{{ version }}</span>
     </p>
   </footer>

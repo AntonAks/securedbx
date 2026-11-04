@@ -1,7 +1,7 @@
 <template>
   <main class="flex-1 max-w-3xl mx-auto px-6 py-12 w-full">
     <!-- Hero -->
-    <div class="text-center mb-10">
+    <div class="text-center mb-10 web-only">
       <h1 class="text-4xl font-semibold text-gray-900 dark:text-slate-100 mb-3">
         {{ $t('home.hero.title') }}<br>{{ $t('home.hero.titleLine2') }}
       </h1>
@@ -101,7 +101,7 @@
     </section>
 
     <!-- Features Section -->
-    <section class="text-center">
+    <section class="text-center web-only">
       <h3 class="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-8">{{ $t('home.features.heading') }}</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="flex flex-col items-center">
@@ -136,7 +136,7 @@
     </section>
 
     <!-- This Service Is For You If... -->
-    <section class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8 mt-8">
+    <section class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8 mt-8 web-only">
       <h3 class="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-6 text-center">{{ $t('home.forYou.heading') }}</h3>
       <ul class="text-gray-600 dark:text-slate-300 space-y-3">
         <li class="flex items-start">
@@ -163,7 +163,7 @@
     </section>
 
     <!-- CLI Teaser -->
-    <section class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8 mt-8">
+    <section class="bg-gray-50 dark:bg-slate-900/60 rounded-xl border border-gray-200 dark:border-slate-700 p-8 mt-8 web-only">
       <div class="text-center mb-5">
         <h3 class="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">{{ $t('home.cli.heading') }}</h3>
         <p class="text-gray-600 dark:text-slate-400">{{ $t('home.cli.description') }}</p>

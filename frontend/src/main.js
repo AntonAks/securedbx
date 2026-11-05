@@ -4,6 +4,7 @@ import App from './App.vue';
 import router from './router';
 import i18n from './i18n';
 import { initTheme } from './stores/theme';
+import './installPrompt.js'; // capture beforeinstallprompt before the router lazy-loads views
 import './assets/main.css';
 
 // Initialize theme immediately to prevent flash

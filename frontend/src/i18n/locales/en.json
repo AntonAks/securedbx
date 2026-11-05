@@ -7,7 +7,7 @@
     "switchToDark": "Switch to dark mode"
   },
   "footer": {
-    "copyright": "\u00a9 {year} SecureDBX - Built with privacy in mind",
+    "copyright": "© {year} SecureDBX - Built with privacy in mind",
     "sourceCode": "Source Code"
   },
   "home": {
@@ -15,7 +15,8 @@
       "title": "Secure & Private",
       "titleLine2": "One-Time File Sharing",
       "subtitle": "Encrypt files and text in your browser. No accounts, no tracking.",
-      "loading": "Loading\u2026"
+      "loading": "Loading…",
+      "installApp": "Install the app"
     },
     "methods": {
       "heading": "How would you like to share?",
@@ -38,7 +39,7 @@
       "pinReason2": "Don't want to copy long URLs",
       "pinReason3": "Want a simple code to type"
     },
-    "backToMethods": "\u2190 Back to methods",
+    "backToMethods": "← Back to methods",
     "tabs": {
       "file": "File",
       "text": "Text",
@@ -79,8 +80,8 @@
       "reason1": "You want to share a file or secret and be certain it disappears forever after viewing",
       "reason2": "You don't trust services that store your files on their servers indefinitely",
       "reason3": "You need to securely share passwords, API keys, or confidential documents without registration",
-      "reason4": "You value privacy and full control over your data \u2014 no logs, no tracking",
-      "reason5": "You need a simple \u201cview once \u2192 gone\u201d approach, with no history or repeated access"
+      "reason4": "You value privacy and full control over your data — no logs, no tracking",
+      "reason5": "You need a simple “view once → gone” approach, with no history or repeated access"
     },
     "cli": {
       "heading": "Use from the Terminal",
@@ -335,7 +336,7 @@
   "components": {
     "dropZone": {
       "dragDrop": "Drag & drop files here (max 10)",
-      "orBrowse": "or click to browse \u2022 500 MB total limit"
+      "orBrowse": "or click to browse • 500 MB total limit"
     },
     "fileList": {
       "selected": "Selected: {count}/10 files",
@@ -360,7 +361,7 @@
     "general": {
       "heading": "General Questions",
       "q1": "What is SecureDBX?",
-      "a1": "SecureDBX is a zero-knowledge file and text sharing service. It lets you securely share files (up to 500MB) and text secrets with end-to-end encryption. By default, content is accessed once and then permanently deleted. Vault and PIN modes also support multi-access sharing \u2014 content is automatically deleted when the expiration time (TTL) is reached.",
+      "a1": "SecureDBX is a zero-knowledge file and text sharing service. It lets you securely share files (up to 500MB) and text secrets with end-to-end encryption. By default, content is accessed once and then permanently deleted. Vault and PIN modes also support multi-access sharing — content is automatically deleted when the expiration time (TTL) is reached.",
       "q2": "Do I need to create an account?",
       "a2": "No! SecureDBX requires no registration, no email, and no personal information. Simply upload your file or text, get a secure link, and share it. That's it.",
       "q3": "Is SecureDBX really free?",
@@ -375,16 +376,16 @@
       "q2": "What encryption does SecureDBX use?",
       "a2": "AES-256-GCM with 256-bit keys generated randomly in your browser. Each encryption uses a fresh initialization vector. All communications use TLS 1.2+.",
       "q3": "Can you see what I upload?",
-      "a3": "No. We cannot see your file contents or text secrets. Everything is encrypted before it leaves your browser. We only see encrypted data, file size, and expiration time. In PIN mode, we also store the filename to deliver it to the recipient, but only temporarily \u2014 for a maximum of TTL time (24 hours). All stored data is automatically deleted after the first download or when the expiration time (TTL) is reached.",
+      "a3": "No. We cannot see your file contents or text secrets. Everything is encrypted before it leaves your browser. We only see encrypted data, file size, and expiration time. In PIN mode, we also store the filename to deliver it to the recipient, but only temporarily — for a maximum of TTL time (24 hours). All stored data is automatically deleted after the first download or when the expiration time (TTL) is reached.",
       "q4": "Do you log IP addresses or track users?",
-      "a4": "No tracking whatsoever. We store only a SHA-256 hash of your IP address for abuse prevention \u2014 the original IP cannot be recovered from the hash. We don't use cookies, don't run analytics, and don't track users in any way.",
+      "a4": "No tracking whatsoever. We store only a SHA-256 hash of your IP address for abuse prevention — the original IP cannot be recovered from the hash. We don't use cookies, don't run analytics, and don't track users in any way.",
       "q5": "Is SecureDBX open source?",
       "a5html": "Yes! Fully open source and available on <a href=\"https://github.com/antonaks/sdbx\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-500 hover:text-blue-400 underline\">GitHub</a>. Security researchers are welcome to audit our code."
     },
     "howItWorks": {
       "heading": "How It Works",
       "q1": "Why can files only be downloaded once by default?",
-      "a1": "One-time access is the default security model for URL link sharing. Once the recipient downloads the file, it's permanently deleted from our servers. However, Vault mode and PIN mode offer multi-access sharing \u2014 content stays available and is automatically deleted when the expiration time (TTL) is reached.",
+      "a1": "One-time access is the default security model for URL link sharing. Once the recipient downloads the file, it's permanently deleted from our servers. However, Vault mode and PIN mode offer multi-access sharing — content stays available and is automatically deleted when the expiration time (TTL) is reached.",
       "q2": "What happens if my download fails due to network issues?",
       "a2": "SecureDBX uses a two-phase download system: when you click download, the file is reserved for 10 minutes. If your connection drops, you can retry with the same link within that window. After successful download, the file is permanently deleted.",
       "q3": "How long do files stay available?",
@@ -424,13 +425,13 @@
       "description": "Have a question that's not answered here? Open an issue on GitHub.",
       "askOnGithub": "Ask on GitHub"
     },
-    "backToHome": "\u2190 Back to Home"
+    "backToHome": "← Back to Home"
   },
   "about": {
     "title": "About SecureDBX",
     "whatIs": {
       "heading": "What is SecureDBX?",
-      "p1html": "SecureDBX is a <strong class=\"text-gray-900 dark:text-slate-100\">zero-knowledge file sharing service</strong> designed with privacy as the core principle. Share files and text securely with end-to-end encryption \u2014 via URL link, PIN code, or password-protected vault \u2014 with no user tracking.",
+      "p1html": "SecureDBX is a <strong class=\"text-gray-900 dark:text-slate-100\">zero-knowledge file sharing service</strong> designed with privacy as the core principle. Share files and text securely with end-to-end encryption — via URL link, PIN code, or password-protected vault — with no user tracking.",
       "p2html": "Unlike traditional file sharing services, SecureDBX ensures that your files are encrypted <em class=\"text-gray-700 dark:text-slate-200\">before</em> they leave your device, and the encryption key never reaches our servers. This means we literally cannot access your files, even if we wanted to."
     },
     "mission": {
@@ -575,7 +576,7 @@
       "description": "Have questions, suggestions, or found a security issue?",
       "reportIssue": "Report an Issue on GitHub"
     },
-    "backToHome": "\u2190 Back to Home"
+    "backToHome": "← Back to Home"
   },
   "language": {
     "en": "English",
